@@ -18,11 +18,22 @@ gmp_dep = dependency('gmp', required: true)
 
 # MPFR must come before GMP in link order (MPFR FAQ).
 # On macOS with Homebrew, MPFR's pkg-config may emit a bare -lgmp without
-# GMP's -L path. Using method: 'pkg-config' works best here.
+# GMP's -L path (GMP and MPFR live in separate Cellar directories).
+# Fix: extract GMP's libdir and inject -L<gmp_libdir> into MPFR's wrapper.
 mpfr_dep = dependency('mpfr', method: 'pkg-config', required: false)
 if not mpfr_dep.found()
   # Fallback: try any method (cmake, config-tool, etc.)
   mpfr_dep = dependency('mpfr', required: true)
+endif
+
+if host_machine.system() == 'darwin'
+  gmp_libdir = gmp_dep.get_variable(pkgconfig: 'libdir', default_value: '')
+  if gmp_libdir != ''
+    mpfr_dep = declare_dependency(
+      dependencies: [mpfr_dep],
+      link_args: ['-L' + gmp_libdir],
+    )
+  endif
 endif
 
 # ── config.h generation ──────────────────────────────────────────────────────
@@ -221,8 +232,15 @@ if curl_dep.found()
   optional_deps += curl_dep
 endif
 
-# readline
-readline_dep = dependency('readline', required: get_option('readline'))
+# readline (keg-only on macOS, not in default pkg-config path)
+readline_dep = dependency('readline', required: false)
+if not readline_dep.found()
+  # Fallback: try to find Homebrew readline directly
+  readline_dep = cc.find_library('readline', required: get_option('readline'))
+  if readline_dep.found() and not cc.has_header('readline/readline.h', dependencies: readline_dep)
+    readline_dep = dependency('', required: false)
+  endif
+endif
 if readline_dep.found()
   cdata.set('HAVE_LIBREADLINE', 1)
   optional_deps += readline_dep

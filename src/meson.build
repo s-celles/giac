@@ -161,10 +161,14 @@ if build_gui
     install: true,
   )
 
-  # icas CLI shell
+  # icas CLI shell (directly uses readline)
+  icas_deps = [libgiac_dep, libxcas_dep]
+  if readline_dep.found()
+    icas_deps += readline_dep
+  endif
   executable('icas',
     files('icas.cc'),
-    dependencies: [libgiac_dep, libxcas_dep],
+    dependencies: icas_deps,
     c_args: giac_common_args,
     cpp_args: giac_common_args,
     install: true,
