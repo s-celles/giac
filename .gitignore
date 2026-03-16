@@ -10,8 +10,6 @@
 # -----------------------------------------------------------------------------
 !.gitignore
 !ABOUT-NLS
-!acinclude.m4
-!aclocal.m4
 !addu.cc
 !archive.mingw
 !AUTHORS
@@ -24,17 +22,6 @@
 !ckbuildmingw
 !compile.android
 !compte
-!config.guess
-!config.h.64
-!config.h.in
-!config.h.iphone
-!config.h.mingw
-!config.h.win
-!config.h.win64
-!config.sub
-!configure
-!configure.ac
-!configure.mingw
 !COPYING
 !fltk.1.1.changes
 !fltk-1.3.8-source.tar.bz2
@@ -49,8 +36,6 @@
 !LEAME.ipaq
 !LEAME.WIN
 !LISEZMOI.numworks
-!Makefile.am
-!Makefile.in
 !meson.build
 !meson_options.txt
 !BUILD_WITH_MESON.md
@@ -66,13 +51,9 @@
 !mkrpm
 !NEWS
 !pariinl.h
-!path.h.in
-!path.iphone
-!path.mingw
 !README
 !README
 !setup
-!simupath.iphone
 !TODO
 !TROUBLES
 !win
@@ -92,8 +73,6 @@
 # -----------------------------------------------------------------------------
 !check/
 !check/**
-!config/
-!config/**
 !debian/
 !debian/**
 !debianold/
@@ -104,10 +83,6 @@
 !examples/**
 !icons/
 !icons/**
-!intl/
-!intl/**
-!m4/
-!m4/**
 !micropython-1.12/
 !micropython-1.12/**
 !po/
