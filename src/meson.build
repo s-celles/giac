@@ -245,6 +245,13 @@ else
   if readline_dep.found()
     icas_deps += readline_dep
   endif
+  # On MSYS2/MinGW, printf/gettext redirect through libintl
+  if host_machine.system() == 'windows'
+    _intl_dep = cc.find_library('intl', required: false)
+    if _intl_dep.found()
+      icas_deps += _intl_dep
+    endif
+  endif
   executable('icas',
     files('icas.cc'),
     dependencies: icas_deps,
@@ -253,9 +260,13 @@ else
     install: true,
   )
 
+  aide_deps = [libgiac_dep]
+  if host_machine.system() == 'windows' and _intl_dep.found()
+    aide_deps += _intl_dep
+  endif
   executable('aide',
     files('aide.cc'),
-    dependencies: [libgiac_dep],
+    dependencies: aide_deps,
     c_args: giac_common_args,
     cpp_args: giac_common_args,
     install: true,
