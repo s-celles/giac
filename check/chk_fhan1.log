@@ -1,0 +1,130 @@
+// Using locale /usr/local/share/locale/
+// C
+// /usr/local/share/locale/
+// giac
+// UTF-8
+// Maximum number of parallel threads 1
+// Giac share root-directory:/usr/local/share/giac/
+// Giac share root-directory:/usr/local/share/giac/
+Added 0 synonyms
+// Giac share root-directory:/usr/local/share/giac/
+// Warning: a, declared as global variable(s). If symbolic variables are required, declare them as local and run purge
+// End defining f
+// Success
+// End defining f
+// Success
+// End defining f
+// Warning: f, declared as global variable(s). If symbolic variables are required, declare them as local and run purge
+// End defining T
+// Warning: a,n, declared as global variable(s). If symbolic variables are required, declare them as local and run purge
+// Warning: L,a, declared as global variable(s). If symbolic variables are required, declare them as local and run purge
+(Comment) scanning line 91
+(Comment) scanning line 92
+(Comment) scanning line 93
+(Comment) scanning line 94
+(Comment) scanning line 95
+(Comment) scanning line 96
+============== restarted ===============
+// Time 0.01
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+OK c'est un  carre
+// Time 0
+// Time 0
+calcul du det 8x8 antisymetrique formel
+// Time 0
+
+Evaluation time: 3.62
+// Time 3.62
+// Time 0.05
+OK c'est bien nul
+
+Evaluation time: 1.94
+// Time 1.94
+// GCD eval dimension 27 6257815 Vector [2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2] 5250 Vector [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,1,1,1,1,1,1,1,1,1,1]1380 
+Find_good_eval 6259629 [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+Fb= 6261376 0
+Gb= 6261833 0
+Find_good_eval 6261843 [-28,-28,23,-26,-46,-87,88,6,-16,14,69,71,-78,-74,81,-27,-87,81,-88,51,-8,68,48,-46,-59,-69]
+Fb= 6358305 %%%{13461,[2]%%%}+%%%{2905,[1]%%%}+%%%{12350,[0]%%%}
+Gb= 6387233 %%%{13461,[1]%%%}+%%%{-13554,[0]%%%}
+FOUND good eval6387244 [-28,-28,23,-26,-46,-87,88,6,-16,14,69,71,-78,-74,81,-27,-87,81,-88,51,-8,68,48,-46,-59,-69]
+// evaled GCD deg 1
+Trying q/lgcd(q) as gcd 27 6387269
+lgcd(q) ok 27 6410214
+Success q/lgcd(q) as gcd 27 6568139
+
+Evaluation time: 0.88
+// Time 0.88
+OK pour le pfaffien 8x8
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0.01
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+La jordanisation est bonne
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0.01
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Total time 6.52
+PASS chk_fhan1 (exit status: 0)

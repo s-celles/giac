@@ -1,0 +1,90 @@
+// Using locale /usr/local/share/locale/
+// C
+// /usr/local/share/locale/
+// giac
+// UTF-8
+// Maximum number of parallel threads 1
+// Giac share root-directory:/usr/local/share/giac/
+// Giac share root-directory:/usr/local/share/giac/
+Added 0 synonyms
+// Giac share root-directory:/usr/local/share/giac/
+// Success
+// End defining puis
+// Warning: x,p, declared as global variable(s). If symbolic variables are required, declare them as local and run purge
+// End defining Periode
+============== restarted ===============
+// Time 0.01
+// Time 0
+// Time 0
+
+Evaluation time: 15.27
+// Time 15.27
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0.01
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0.01
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0.01
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0.01
+// Time 0
+// Time 0
+// Time 0.01
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0
+// Time 0.02
+// Time 0
+// Total time 15.35
+PASS chk_fhan9 (exit status: 0)
