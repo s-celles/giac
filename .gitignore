@@ -11,7 +11,7 @@
 !.gitignore
 !.gitmodules
 !AUTHORS.md
-!BUILD_WITH_MESON.md
+!BUILDING.md
 !CHANGELOG.md
 !COPYING
 !justfile

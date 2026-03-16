@@ -7,7 +7,7 @@ GIAC is a C++ library for symbolic and numeric computation (Computer Algebra Sys
 
 ## Building
 
-See [BUILD_WITH_MESON.md](BUILD_WITH_MESON.md) for build instructions.
+See [BUILDING.md](BUILDING.md) for build instructions.
 
 ## License
 
