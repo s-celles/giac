@@ -67,6 +67,15 @@ foreach h : [
   endif
 endforeach
 
+# C++ hash map / unordered_map detection (needed for MPQS large prime hashmap)
+if cxx.has_header('unordered_map')
+  cdata.set('C11_UNORDERED_MAP', 1)
+elif cxx.has_header('ext/hash_map')
+  cdata.set('EXT_HASH_MAP', 1)
+elif cxx.has_header('hash_map')
+  cdata.set('HASH_MAP', 1)
+endif
+
 # Function checks
 foreach f : [
   'getcwd', 'getpid', 'getpwuid', 'getuid', 'getgid',
