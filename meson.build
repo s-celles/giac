@@ -89,6 +89,7 @@ if host_machine.system() == 'linux'
   endif
 
 elif host_machine.system() == 'darwin'
+  cdata.set('HAVE_LIBPTHREAD', 1)
   is_ios = false
   is_catalyst = false
   if host_machine.subsystem() == 'ios'
@@ -144,8 +145,8 @@ if ntl_dep.found()
   optional_deps += ntl_dep
 endif
 
-# CoCoA
-cocoa_dep = dependency('cocoa', required: get_option('cocoa'))
+# CoCoA (math library, not macOS Cocoa.framework — use pkg-config only)
+cocoa_dep = dependency('cocoa', method: 'pkg-config', required: get_option('cocoa'))
 if cocoa_dep.found()
   cdata.set('HAVE_LIBCOCOA', 1)
   optional_deps += cocoa_dep
