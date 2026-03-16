@@ -180,6 +180,36 @@ if build_gui
   )
 endif
 
+# ── Test suite (requires icas from GUI build) ────────────────────────────────
+
+if build_gui
+  check_dir = meson.current_source_dir() / '..' / 'check'
+
+  # Script-based tests that run icas with .cas input and diff against .out
+  check_tests = {
+    'factor': 'testfactor',
+    'normalize': 'testnormalize',
+    'partfrac': 'testpartfrac',
+    'limit': 'testlimit',
+    'cas': 'testcas',
+    'geo': 'testgeo',
+  }
+
+  icas_exe = meson.current_build_dir() / 'icas'
+
+  foreach name, input : check_tests
+    test(name,
+      find_program('sh'),
+      args: ['-c',
+        icas_exe + ' ' + check_dir / input + ' > ' + name + '.tst && diff ' + name + '.tst ' + check_dir / name + '.out',
+      ],
+      workdir: meson.current_build_dir(),
+      timeout: 120,
+      suite: 'check',
+    )
+  endforeach
+endif
+
 # ── GUI summary ──────────────────────────────────────────────────────────────
 
 gui_has_gl = false
