@@ -1,0 +1,21 @@
+/*
+ * Vendored JNI platform header for macOS/Darwin.
+ * Extracted from OpenJDK — compatible with all JDK versions.
+ */
+
+#ifndef _JAVASOFT_JNI_MD_H_
+#define _JAVASOFT_JNI_MD_H_
+
+#define JNIEXPORT __attribute__((visibility("default")))
+#define JNIIMPORT
+#define JNICALL
+
+typedef int jint;
+#ifdef _LP64
+typedef long jlong;
+#else
+typedef long long jlong;
+#endif
+typedef signed char jbyte;
+
+#endif /* _JAVASOFT_JNI_MD_H_ */

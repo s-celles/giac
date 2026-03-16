@@ -282,6 +282,34 @@ if build_jni
   )
 endif
 
+# ── MicroPython (optional, disabled by default) ──────────────────────────────
+
+micropython_enabled = false
+
+if get_option('micropython').enabled()
+  micropython_dir = meson.current_source_dir() / '..' / 'micropython-1.12'
+  make_prog = find_program('make', required: true)
+
+  micropython_lib = custom_target('micropython',
+    output: 'libmicropython.a',
+    command: [make_prog, '-C', micropython_dir / 'unix',
+      'CC=' + cc.cmd_array()[0],
+      'libmicropython.a',
+    ],
+    build_by_default: true,
+  )
+
+  micropython_dep = declare_dependency(
+    sources: micropython_lib,
+    include_directories: include_directories('..' / 'micropython-1.12'),
+  )
+
+  micropython_enabled = true
+  cdata.set('HAVE_LIBMICROPYTHON', 1)
+endif
+
+# ── Summaries ────────────────────────────────────────────────────────────────
+
 summary({
   'JNI bindings': build_jni,
 }, section: 'Bindings', bool_yn: true)
@@ -289,5 +317,6 @@ summary({
 summary({
   'QuickJS': quickjs_enabled,
   'libbf': libbf_enabled,
+  'MicroPython': micropython_enabled,
   'Flex/Bison regen': get_option('regen_parser'),
 }, section: 'Build options', bool_yn: true)
