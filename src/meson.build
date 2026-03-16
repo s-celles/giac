@@ -202,14 +202,22 @@ if build_gui
   icas_exe = meson.current_build_dir() / 'icas'
 
   foreach name, input : check_tests
+    # Create a wrapper test file that resets python_compat(0) to ensure
+    # ^ notation (not **) regardless of user config or runtime defaults,
+    # then strip its extra output line with tail.
     test(name,
       find_program('sh'),
       args: ['-c',
-        icas_exe + ' ' + check_dir / input + ' > ' + name + '.tst && diff ' + name + '.tst ' + check_dir / name + '.out',
+        'printf "python_compat(0):;\\n" > ' + name + '.in && ' +
+        'cat ' + check_dir / input + ' >> ' + name + '.in && ' +
+        icas_exe + ' ' + name + '.in > ' + name + '.raw && ' +
+        'tail -n +2 ' + name + '.raw > ' + name + '.tst && ' +
+        'diff ' + name + '.tst ' + check_dir / name + '.out',
       ],
       workdir: meson.current_build_dir(),
       timeout: 120,
       suite: 'check',
+      env: {'HOME': meson.current_build_dir()},
     )
   endforeach
 endif
@@ -258,6 +266,30 @@ if not _skip_jni
       jni_header_inc = include_directories()
       build_jni = true
     endif
+  endif
+endif
+
+if build_jni
+  # Verify giac_wrap.cxx is in sync with current API before building.
+  # The SWIG-generated wrapper may reference removed methods (e.g. printcharptr).
+  _wrap_check = cxx.compiles('''
+    #include "gen.h"
+    void test() { giac::gen g; (void)g.print(); }
+  ''',
+    name: 'giac_wrap.cxx API compatibility',
+    include_directories: [giac_inc, config_inc],
+    args: giac_common_args,
+    dependencies: giac_deps,
+  )
+  # Also check the wrapper itself compiles (quick syntax check of a known symbol)
+  _wrap_file_ok = run_command('grep', '-q', 'printcharptr', files('giac_wrap.cxx'),
+    check: false,
+  ).returncode() != 0  # If printcharptr is NOT found, wrapper is probably regenerated
+
+  if not _wrap_file_ok
+    warning('giac_wrap.cxx references removed API (printcharptr). ' +
+            'JNI bindings skipped. Regenerate with: swig -c++ -java -package javagiac giac.i')
+    build_jni = false
   endif
 endif
 
