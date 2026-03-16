@@ -169,13 +169,17 @@ optional_deps = []
 pari_dep = dependency('pari', required: false)
 if not pari_dep.found() and not get_option('pari').disabled()
   # PARI often lacks a pkg-config file; fall back to manual detection
-  _pari_lib = cc.find_library('pari', required: false,
-    dirs: ['/opt/homebrew/lib', '/usr/local/lib'])
-  if _pari_lib.found() and cc.has_header('pari/pari.h',
-      args: ['-I/opt/homebrew/include', '-I/usr/local/include'])
+  _pari_extra_dirs = []
+  _pari_extra_args = []
+  if host_machine.system() == 'darwin'
+    _pari_extra_dirs = ['/opt/homebrew/lib', '/usr/local/lib']
+    _pari_extra_args = ['-I/opt/homebrew/include', '-I/usr/local/include']
+  endif
+  _pari_lib = cc.find_library('pari', required: false, dirs: _pari_extra_dirs)
+  if _pari_lib.found() and cc.has_header('pari/pari.h', args: _pari_extra_args)
     pari_dep = declare_dependency(
       dependencies: _pari_lib,
-      compile_args: ['-I/opt/homebrew/include'],
+      compile_args: _pari_extra_args,
     )
   elif get_option('pari').enabled()
     error('PARI library requested but not found')
@@ -183,10 +187,7 @@ if not pari_dep.found() and not get_option('pari').disabled()
 endif
 if pari_dep.found()
   cdata.set('HAVE_LIBPARI', 1)
-  if cc.has_header('pari/pari.h',
-      args: ['-I/opt/homebrew/include', '-I/usr/local/include'])
-    cdata.set('HAVE_PARI_PARI_H', 1)
-  endif
+  cdata.set('HAVE_PARI_PARI_H', 1)
   optional_deps += pari_dep
 endif
 
@@ -235,14 +236,18 @@ endif
 # Try system first, then fall back to subproject via ecm.wrap
 ecm_dep = dependency('ecm', required: false)
 if not ecm_dep.found() and not get_option('ecm').disabled()
-  # No pkg-config; try manual detection
-  _ecm_lib = cc.find_library('ecm', required: false,
-    dirs: ['/opt/homebrew/lib', '/usr/local/lib'])
-  if _ecm_lib.found() and cc.has_header('ecm.h',
-      args: ['-I/opt/homebrew/include', '-I/usr/local/include'])
+  # No pkg-config; try manual detection (macOS Homebrew paths)
+  _ecm_extra_dirs = []
+  _ecm_extra_args = []
+  if host_machine.system() == 'darwin'
+    _ecm_extra_dirs = ['/opt/homebrew/lib', '/usr/local/lib']
+    _ecm_extra_args = ['-I/opt/homebrew/include', '-I/usr/local/include']
+  endif
+  _ecm_lib = cc.find_library('ecm', required: false, dirs: _ecm_extra_dirs)
+  if _ecm_lib.found() and cc.has_header('ecm.h', args: _ecm_extra_args)
     ecm_dep = declare_dependency(
       dependencies: _ecm_lib,
-      compile_args: ['-I/opt/homebrew/include'],
+      compile_args: _ecm_extra_args,
     )
   elif get_option('ecm').enabled()
     # Force subproject build
