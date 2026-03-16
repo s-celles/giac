@@ -1,0 +1,11 @@
+[wrap-file]
+directory = fltk-1.3.8
+source_url = https://www.fltk.org/pub/fltk/1.3.8/fltk-1.3.8-source.tar.gz
+source_filename = fltk-1.3.8-source.tar.gz
+source_hash = 5cc8f27d1579f4506e92a84ee30dd17dc0a33d5c4a4a7e tried 2910c95e9c
+
+[provide]
+dependency_names = fltk
+
+[wrap-options]
+cmake_options = -DFLTK_BUILD_TEST=OFF,-DFLTK_BUILD_EXAMPLES=OFF,-DOPTION_BUILD_SHARED_LIBS=OFF

@@ -53,6 +53,7 @@
 !Makefile.in
 !meson.build
 !meson_options.txt
+!BUILD_WITH_MESON.md
 !mkdebian
 !mkdebian2
 !mkdebian32
@@ -115,8 +116,20 @@
 !micropython-1.12/**
 !po/
 !po/**
+!cross/
+!cross/**
+!scripts/
+!scripts/**
+!subprojects/
+!subprojects/**
 !src/
 !src/**
+
+# -----------------------------------------------------------------------------
+# Meson build outputs (always ignore)
+# -----------------------------------------------------------------------------
+builddir/
+cross/local/
 
 # -----------------------------------------------------------------------------
 # Classic C++ gitignore
