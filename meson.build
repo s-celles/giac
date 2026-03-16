@@ -341,6 +341,8 @@ giac_headers = files(
   'src/quickjs-atom.h', 'src/quickjs-libc.h', 'src/quickjs-opcode.h',
   'src/bf2gmp.h',
   'src/input_lexer.h',
+  'src/opengl.h',
+  'src/path.h',
   'src/qrcodegen.h',
 )
 
