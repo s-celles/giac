@@ -36,6 +36,9 @@ sudo dnf install meson ninja-build gcc gcc-c++ gmp-devel mpfr-devel
 
 ```bash
 brew install meson ninja gmp mpfr
+
+# Optional: GUI and additional libraries
+brew install fltk readline
 ```
 
 ### FreeBSD
@@ -156,9 +159,17 @@ meson test -C builddir
 ```bash
 meson setup builddir
 meson compile -C builddir
+meson test -C builddir --suite check
 ```
 
-On macOS, LAPACK is provided via the Accelerate framework when the `lapack` option is auto or enabled. GMP and MPFR are found via Homebrew's pkg-config.
+**macOS-specific notes:**
+
+- **LAPACK** is provided via the Accelerate framework automatically.
+- **GMP / MPFR**: Homebrew installs these in separate Cellar directories. The build system injects GMP's `-L` path into MPFR's link flags to handle this.
+- **readline**: Homebrew's readline is keg-only (not symlinked into `/opt/homebrew`). The build system falls back to `cc.find_library` to detect it.
+- **CoCoA**: The build uses pkg-config only to avoid confusing the CoCoA math library with macOS's Cocoa.framework.
+- **JNI**: If `giac_wrap.cxx` is out of sync with the current API, the JNI build is automatically skipped with a warning. Regenerate with `swig -c++ -java -package javagiac giac.i` if needed.
+- **Tests**: Two tests (`cas`, `geo`) may fail on macOS due to platform-specific internal display attribute values. This is expected.
 
 ### Windows (MinGW / MSYS2)
 
@@ -300,6 +311,18 @@ On macOS, the Accelerate framework provides LAPACK and BLAS automatically.
 ### Cross-compilation: dependency not found
 
 When cross-compiling, GMP and MPFR must be available in the target sysroot. Set `pkg_config_libdir` in the cross file's `[properties]` section to point to the sysroot's pkgconfig directory.
+
+### JNI bindings skipped (stale wrapper)
+
+If you see a warning like `giac_wrap.cxx references removed API (printcharptr)`, the SWIG-generated wrapper is out of sync with the current giac API. Regenerate it:
+
+```bash
+# Requires SWIG installed
+cd src
+swig -c++ -java -package javagiac -outdir javagiac giac.i
+```
+
+Then reconfigure: `meson setup builddir --reconfigure`
 
 ### C++ standard errors
 
