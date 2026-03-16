@@ -396,4 +396,5 @@ pkg.generate(libgiac,
   name: 'giac',
   description: 'Giac Computer Algebra System library',
   url: 'https://www-fourier.ujf-grenoble.fr/~parisse/giac.html',
+  requires: [gmp_dep, mpfr_dep],
 )
