@@ -1,0 +1,30 @@
+# GUI and bindings
+option('gui',          type: 'feature', value: 'auto', description: 'Build xcas GUI (FLTK), libxcas, icas, aide')
+option('jni',          type: 'feature', value: 'auto', description: 'Build libjavagiac JNI bindings')
+
+# Optional math libraries
+option('pari',         type: 'feature', value: 'auto', description: 'PARI number theory library')
+option('ntl',          type: 'feature', value: 'auto', description: 'NTL number theory library')
+option('cocoa',        type: 'feature', value: 'auto', description: 'CoCoA commutative algebra')
+option('gsl',          type: 'feature', value: 'auto', description: 'GNU Scientific Library')
+option('lapack',       type: 'feature', value: 'auto', description: 'LAPACK linear algebra (Accelerate on macOS)')
+option('ecm',          type: 'feature', value: 'auto', description: 'ECM factorization')
+option('glpk',         type: 'feature', value: 'auto', description: 'GLPK linear programming')
+
+# Optional utility libraries
+option('png',          type: 'feature', value: 'auto', description: 'libpng for image output')
+option('ao',           type: 'feature', value: 'auto', description: 'libao audio output')
+option('samplerate',   type: 'feature', value: 'auto', description: 'libsamplerate audio resampling')
+option('curl',         type: 'feature', value: 'auto', description: 'libcurl for network features')
+option('readline',     type: 'feature', value: 'auto', description: 'GNU readline for icas')
+option('gettext',      type: 'feature', value: 'auto', description: 'Internationalization (gettext/libintl)')
+option('gc',           type: 'feature', value: 'disabled', description: 'Boehm garbage collector')
+option('dl',           type: 'feature', value: 'auto', description: 'Dynamic loading (libdl)')
+
+# Embedded engines
+option('micropython',  type: 'feature', value: 'disabled', description: 'Embedded MicroPython 1.12 interpreter')
+option('quickjs',      type: 'feature', value: 'auto', description: 'Embedded QuickJS JavaScript engine')
+option('libbf',        type: 'feature', value: 'auto', description: 'libbf arbitrary precision (bundled with QuickJS)')
+
+# Build behavior
+option('regen_parser', type: 'boolean', value: false, description: 'Regenerate flex/bison parser (requires flex + bison)')

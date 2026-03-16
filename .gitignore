@@ -51,6 +51,8 @@
 !LISEZMOI.numworks
 !Makefile.am
 !Makefile.in
+!meson.build
+!meson_options.txt
 !mkdebian
 !mkdebian2
 !mkdebian32
