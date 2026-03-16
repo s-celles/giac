@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, '**meson*', '**decouple*']
+    branches: [main, dev, '0**']
   pull_request:
     branches: [main]
 
