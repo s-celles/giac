@@ -43,6 +43,14 @@ rebuild: clean setup build
 debian:
     dpkg-buildpackage -us -uc
 
+# Run the icas interactive CAS shell
+icas *ARGS:
+    {{builddir}}/src/icas {{ARGS}}
+
+# Run the aide help tool
+aide *ARGS:
+    {{builddir}}/src/aide {{ARGS}}
+
 # Show build configuration summary
 info:
     meson introspect {{builddir}} --buildoptions
