@@ -143,7 +143,21 @@ endif
 optional_deps = []
 
 # PARI
-pari_dep = dependency('pari', required: get_option('pari'))
+pari_dep = dependency('pari', required: false)
+if not pari_dep.found() and not get_option('pari').disabled()
+  # PARI often lacks a pkg-config file; fall back to manual detection
+  _pari_lib = cc.find_library('pari', required: false,
+    dirs: ['/opt/homebrew/lib', '/usr/local/lib'])
+  if _pari_lib.found() and cc.has_header('pari/pari.h',
+      args: ['-I/opt/homebrew/include', '-I/usr/local/include'])
+    pari_dep = declare_dependency(
+      dependencies: _pari_lib,
+      compile_args: ['-I/opt/homebrew/include'],
+    )
+  elif get_option('pari').enabled()
+    error('PARI library requested but not found')
+  endif
+endif
 if pari_dep.found()
   cdata.set('HAVE_LIBPARI', 1)
   optional_deps += pari_dep
