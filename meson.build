@@ -76,6 +76,20 @@ elif cxx.has_header('hash_map')
   cdata.set('HASH_MAP', 1)
 endif
 
+# C++ feature detection
+if cxx.has_header('sstream')
+  cdata.set('HAVE_SSTREAM', 1)
+endif
+if cxx.has_header('gmpxx.h', dependencies: gmp_dep)
+  cdata.set('HAVE_GMPXX_H', 1)
+endif
+if cc.sizeof('long double') > cc.sizeof('double')
+  cdata.set('HAVE_LONG_DOUBLE', 1)
+endif
+
+# Debug support (interactive debugger in prog.cc)
+cdata.set('DEBUG_SUPPORT', 1)
+
 # Function checks
 foreach f : [
   'getcwd', 'getpid', 'getpwuid', 'getuid', 'getgid',
@@ -169,6 +183,10 @@ if not pari_dep.found() and not get_option('pari').disabled()
 endif
 if pari_dep.found()
   cdata.set('HAVE_LIBPARI', 1)
+  if cc.has_header('pari/pari.h',
+      args: ['-I/opt/homebrew/include', '-I/usr/local/include'])
+    cdata.set('HAVE_PARI_PARI_H', 1)
+  endif
   optional_deps += pari_dep
 endif
 
@@ -247,6 +265,7 @@ endif
 png_dep = dependency('libpng', required: get_option('png'))
 if png_dep.found()
   cdata.set('HAVE_LIBPNG', 1)
+  cdata.set('HAVE_PNG_H', 1)
   optional_deps += png_dep
 endif
 
@@ -325,6 +344,22 @@ endif
 thread_dep = dependency('threads', required: false)
 if thread_dep.found()
   optional_deps += thread_dep
+endif
+
+# librt (clock_gettime on older Linux)
+rt_dep = cc.find_library('rt', required: false)
+if rt_dep.found()
+  cdata.set('HAVE_LIBRT', 1)
+  optional_deps += rt_dep
+endif
+
+# nauty (graph automorphism — bundled in src/nautywrapper.c)
+# The source includes its own nauty; HAVE_LIBNAUTY enables system nauty
+_nauty_dep = cc.find_library('nauty', required: false)
+if _nauty_dep.found() and cc.has_header('nauty/naututil.h')
+  cdata.set('HAVE_LIBNAUTY', 1)
+  cdata.set('HAVE_NAUTY_NAUTUTIL_H', 1)
+  optional_deps += _nauty_dep
 endif
 
 # ── Write config.h ───────────────────────────────────────────────────────────
