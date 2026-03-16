@@ -340,6 +340,7 @@ giac_headers = files(
   'src/qjsgiac.h', 'src/quickjs.h', 'src/js.h',
   'src/quickjs-atom.h', 'src/quickjs-libc.h', 'src/quickjs-opcode.h',
   'src/bf2gmp.h',
+  'src/input_lexer.h',
 )
 
 install_headers(giac_headers, subdir: 'giac')
