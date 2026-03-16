@@ -1,0 +1,104 @@
+name: CI
+
+on:
+  push:
+    branches: [main, '**/meson*']
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            name: Linux
+            gui: true
+          - os: macos-latest
+            name: macOS
+            gui: true
+          - os: windows-latest
+            name: Windows (MSYS2)
+            gui: false
+
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # ── Linux dependencies ──────────────────────────────────────────────
+      - name: Install dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y meson ninja-build gcc g++ \
+            libgmp-dev libmpfr-dev libfltk1.3-dev libreadline-dev \
+            libpng-dev libcurl4-openssl-dev
+
+      # ── macOS dependencies ─────────────────────────────────────────────
+      - name: Install dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install meson ninja gmp mpfr fltk@1.3 readline
+
+      # ── Windows (MSYS2) dependencies ───────────────────────────────────
+      - name: Setup MSYS2 (Windows)
+        if: runner.os == 'Windows'
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-meson
+            mingw-w64-x86_64-ninja
+            mingw-w64-x86_64-gmp
+            mingw-w64-x86_64-mpfr
+            mingw-w64-x86_64-libpng
+            mingw-w64-x86_64-curl
+
+      # ── Configure ──────────────────────────────────────────────────────
+      - name: Configure (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: meson setup builddir
+
+      - name: Configure (Windows)
+        if: runner.os == 'Windows'
+        shell: msys2 {0}
+        run: meson setup builddir -Dgui=disabled
+
+      # ── Build ──────────────────────────────────────────────────────────
+      - name: Build (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: meson compile -C builddir
+
+      - name: Build (Windows)
+        if: runner.os == 'Windows'
+        shell: msys2 {0}
+        run: meson compile -C builddir
+
+      # ── Unit tests ─────────────────────────────────────────────────────
+      - name: Unit tests (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: meson test -C builddir --suite unit
+
+      - name: Unit tests (Windows)
+        if: runner.os == 'Windows'
+        shell: msys2 {0}
+        run: meson test -C builddir --suite unit
+
+      # ── Integration tests (requires GUI / icas) ────────────────────────
+      - name: Integration tests
+        if: matrix.gui
+        run: meson test -C builddir --suite check
+        continue-on-error: true
+
+      # ── Upload logs on failure ─────────────────────────────────────────
+      - name: Upload test logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-logs-${{ matrix.os }}
+          path: builddir/meson-logs/testlog.txt

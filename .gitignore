@@ -120,6 +120,10 @@
 !subprojects/**
 !src/
 !src/**
+!tests/
+!tests/**
+!.github/
+!.github/**
 
 # -----------------------------------------------------------------------------
 # Meson build outputs (always ignore)
