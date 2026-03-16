@@ -93,185 +93,38 @@ executable('hevea2mml',
   install: true,
 )
 
-# ── GUI targets (xcas, icas, aide) ───────────────────────────────────────────
+# ── icas and aide (CLI only, no GUI) ─────────────────────────────────────────
 
-build_gui = false
-fltk_dep = dependency('', required: false)
-
-if not get_option('gui').disabled()
-  # Try system FLTK via fltk-config
-  fltk_dep = dependency('fltk', method: 'config-tool', required: false)
-
-  # On macOS, Homebrew's fltk@1.3 is keg-only — try its fltk-config explicitly
-  if not fltk_dep.found() and host_machine.system() == 'darwin'
-    foreach _fltk13_path : ['/opt/homebrew/opt/fltk@1.3/bin/fltk-config',
-                            '/usr/local/opt/fltk@1.3/bin/fltk-config']
-      _fltk13 = find_program(_fltk13_path, required: false)
-      if _fltk13.found()
-        # Use fltk-config to get compile/link flags manually
-        _fltk_cflags = run_command(_fltk13, '--cflags', check: true).stdout().strip()
-        _fltk_ldflags = run_command(_fltk13, '--use-gl', '--use-images', '--ldflags',
-          check: true).stdout().strip()
-        _fltk_ver = run_command(_fltk13, '--version', check: true).stdout().strip()
-        # FLTK's --use-images emits -lpng/-ljpeg without -L paths on Homebrew.
-        # Use Meson's own png/jpeg deps for proper library resolution.
-        _fltk_link_args = []
-        foreach _f : _fltk_ldflags.split()
-          if _f != '-lpng' and _f != '-ljpeg'
-            _fltk_link_args += _f
-          endif
-        endforeach
-        _fltk_img_deps = [
-          dependency('libpng', required: false),
-          dependency('libjpeg', required: false),
-        ]
-        fltk_dep = declare_dependency(
-          compile_args: _fltk_cflags.split(),
-          link_args: _fltk_link_args,
-          dependencies: _fltk_img_deps,
-          version: _fltk_ver,
-        )
-        break
-      endif
-    endforeach
-  endif
-
-  if not fltk_dep.found()
-    # Try pkg-config / cmake fallback
-    fltk_dep = dependency('fltk', required: get_option('gui'))
-  endif
-
-  # Warn if FLTK 1.4 is found — giac GUI requires 1.3.x
-  if fltk_dep.found() and fltk_dep.version().version_compare('>= 1.4.0')
-    warning('FLTK ' + fltk_dep.version() + ' detected but giac GUI requires FLTK 1.3.x. ' +
-            'On macOS: brew install fltk@1.3')
-    if not get_option('gui').enabled()
-      fltk_dep = dependency('', required: false)
-    endif
-  endif
-
-  if fltk_dep.found()
-    build_gui = true
+icas_deps = [libgiac_dep]
+if readline_dep.found()
+  icas_deps += readline_dep
+endif
+# On MSYS2/MinGW, printf/gettext redirect through libintl
+if host_machine.system() == 'windows'
+  _intl_dep = cc.find_library('intl', required: false)
+  if _intl_dep.found()
+    icas_deps += _intl_dep
   endif
 endif
+executable('icas',
+  files('icas.cc'),
+  dependencies: icas_deps,
+  c_args: giac_common_args,
+  cpp_args: giac_common_args,
+  install: true,
+)
 
-if build_gui
-  # Optional GL and X11 for GUI
-  gl_dep = dependency('gl', required: false)
-  x11_dep = dependency('x11', required: false)
-
-  # GUI compile args: base args + FLTK/GL defines
-  gui_args = giac_common_args + ['-DHAVE_LIBFLTK']
-  if gl_dep.found()
-    gui_args += ['-DHAVE_LIBFLTK_GL']
-  endif
-
-  # GUI sources use #include "giac/first.h" — create a symlink so that
-  # src/giac/ -> src/ allows the include to resolve from src/
-  _giac_symlink = run_command('sh', '-c',
-    'test -e "' + meson.current_source_dir() / 'giac' + '" || ' +
-    'ln -s "." "' + meson.current_source_dir() / 'giac' + '"',
-    check: false,
-  )
-
-  gui_deps = [libgiac_dep, fltk_dep]
-  if gl_dep.found()
-    gui_deps += gl_dep
-  endif
-  if x11_dep.found()
-    gui_deps += x11_dep
-  endif
-
-  # libxcas
-  xcas_lib_sources = files(
-    'History.cc', 'Input.cc', 'Xcas1.cc', 'Equation.cc',
-    'Print.cc', 'Tableur.cc', 'Editeur.cc', 'Graph.cc',
-    'Graph3d.cc', 'Help1.cc', 'Cfg.cc',
-    'Flv_CStyle.cc', 'Flve_Check_Button.cc', 'Flve_Input.cc',
-    'Flv_Style.cc', 'Flv_Data_Source.cc', 'Flve_Combo.cc',
-    'Flv_List.cc', 'Flv_Table.cc', 'gl2ps.c', 'Python.cc',
-  )
-
-  libxcas = shared_library('xcas',
-    xcas_lib_sources,
-    include_directories: [giac_inc, config_inc],
-    dependencies: gui_deps,
-    c_args: gui_args,
-    cpp_args: gui_args,
-    install: true,
-    version: '0.0.0',
-    soversion: '0',
-  )
-
-  libxcas_dep = declare_dependency(
-    link_with: libxcas,
-    include_directories: [giac_inc, config_inc],
-    dependencies: gui_deps,
-  )
-
-  # xcas executable
-  executable('xcas',
-    files('xcas.cxx'),
-    dependencies: [libgiac_dep, libxcas_dep],
-    c_args: gui_args,
-    cpp_args: gui_args,
-    install: true,
-  )
-
-  # icas CLI shell with GUI support (links libxcas for graph output etc.)
-  icas_gui_deps = [libgiac_dep, libxcas_dep]
-  if readline_dep.found()
-    icas_gui_deps += readline_dep
-  endif
-  executable('icas',
-    files('icas.cc'),
-    dependencies: icas_gui_deps,
-    c_args: gui_args,
-    cpp_args: gui_args,
-    install: true,
-  )
-
-  # aide help tool with GUI support
-  executable('aide',
-    files('aide.cc'),
-    dependencies: [libgiac_dep, libxcas_dep],
-    c_args: gui_args,
-    cpp_args: gui_args,
-    install: true,
-  )
-else
-  # ── icas and aide without GUI (no FLTK, no libxcas) ───────────────────────
-  icas_deps = [libgiac_dep]
-  if readline_dep.found()
-    icas_deps += readline_dep
-  endif
-  # On MSYS2/MinGW, printf/gettext redirect through libintl
-  if host_machine.system() == 'windows'
-    _intl_dep = cc.find_library('intl', required: false)
-    if _intl_dep.found()
-      icas_deps += _intl_dep
-    endif
-  endif
-  executable('icas',
-    files('icas.cc'),
-    dependencies: icas_deps,
-    c_args: giac_common_args,
-    cpp_args: giac_common_args,
-    install: true,
-  )
-
-  aide_deps = [libgiac_dep]
-  if host_machine.system() == 'windows' and _intl_dep.found()
-    aide_deps += _intl_dep
-  endif
-  executable('aide',
-    files('aide.cc'),
-    dependencies: aide_deps,
-    c_args: giac_common_args,
-    cpp_args: giac_common_args,
-    install: true,
-  )
+aide_deps = [libgiac_dep]
+if host_machine.system() == 'windows' and _intl_dep.found()
+  aide_deps += _intl_dep
 endif
+executable('aide',
+  files('aide.cc'),
+  dependencies: aide_deps,
+  c_args: giac_common_args,
+  cpp_args: giac_common_args,
+  install: true,
+)
 
 # ── Test suite (runs whenever icas is available) ──────────────────────────────
 
@@ -308,23 +161,6 @@ foreach name, input : check_tests
     env: {'HOME': meson.current_build_dir()},
   )
 endforeach
-
-# ── GUI summary ──────────────────────────────────────────────────────────────
-
-gui_has_gl = false
-gui_has_x11 = false
-if build_gui
-  gui_has_gl = gl_dep.found()
-  if host_machine.system() == 'linux' or host_machine.system() == 'freebsd'
-    gui_has_x11 = x11_dep.found()
-  endif
-endif
-
-summary({
-  'FLTK GUI': build_gui,
-  'OpenGL': gui_has_gl,
-  'X11': gui_has_x11,
-}, section: 'GUI', bool_yn: true)
 
 # ── JNI bindings (libjavagiac) ───────────────────────────────────────────────
 

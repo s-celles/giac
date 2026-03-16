@@ -85,7 +85,6 @@ using namespace std;
 #ifdef HAVE_SIGNAL_H
 #include <signal.h>
 #endif
-#include "Python.h"
 #include "qjsgiac.h"
 #ifdef __MINGW_H
 #include <direct.h>
@@ -180,11 +179,7 @@ void dealloc(struct Tgraph *graph);
 
 static int texmacs_counter= 0;
 
-#ifndef EMCC2
-#include "Xcas1.h"
-#endif
 
-#ifndef HAVE_LIBFLTK
 using namespace giac;
 #define STDIN_FILENO 0
 
@@ -202,15 +197,6 @@ namespace xcas {
     }
   }
 }
-
-#else
-
-#include "Cfg.h"
-void ctrl_c_signal_handler(int signum){
-  giac::ctrl_c=true;
-  cerr << "icas/giac process " << getpid() << ", Ctrl-C pressed, interruption requested" << '\n';
-}
-#endif // fltk
 
 void format_plugin () {
   // The configuration of a plugin can be completed at startup time.
@@ -545,116 +531,6 @@ std::string texmacs_image_file;
 int texmacs_image_files_count;
 
 void texmacs_graph_output(const giac::gen & g,giac::gen & gg,std::string & figfilename,int file_type,const giac::context * contextptr){
-#ifdef HAVE_LIBFLTK 
-#if 1 // changes by L. Marohnić
-  string fcrop=texmacs_image_file+"-crop.pdf";
-  string fclean=texmacs_image_file+"-clean.eps";
-  string feps=texmacs_image_file+".eps";
-  string fpdf=texmacs_image_file+".pdf";
-  if (!xcas::fltk_view(g,gg,feps,figfilename,file_type,contextptr)){
-    texmacs_begin();
-    printf("verbatim:%s\n",icas_gettext("Plot cancelled or unable to plot"));
-    texmacs_end();
-    flush_stdout();
-    return;
-  }
-  if (0 && figfilename.empty()){
-    texmacs_begin();
-    if (gg.is_symb_of_sommet(giac::at_program))
-      printf("verbatim:%s\n",gg.print().c_str());
-    else {
-      if (gg.type==giac::_STRNG)
-        printf("verbatim:%s\n",gg._STRNGptr->c_str());
-      else 
-        printf("scheme:%s",giac::gen2scm(gg,giac::context0).c_str());
-    }
-    texmacs_end();
-    flush_stdout();
-  }
-  else {
-    bool cleaned=false,cropped=false,no_pdfcrop=true;
-#ifdef HAVE_SYSTEM
-    if (system(NULL)) {
-#ifdef __MINGW_H
-      no_pdfcrop=system("where pdfcrop >nul 2>&1") || system("where pdfinfo >nul 2>&1");
-#else
-      no_pdfcrop=system("which pdfcrop >/dev/null 2>&1") || system("which pdfinfo >/dev/null 2>&1");
-#endif
-      stringstream ss;
-      int lr,status;
-#ifdef __MINGW_H
-      cleaned=system_status_ok(system(("eps2eps "+feps+" "+fclean).c_str())) &&
-              system_status_ok(system(("ps2pdf -dEPSCrop "+fclean+" "+fpdf).c_str()));
-#else
-      status=system(("eps2eps "+feps+" - | ps2pdf -dEPSCrop - "+fpdf).c_str());
-      cleaned=system_status_ok(status);
-#endif
-      if (cleaned && !no_pdfcrop) {
-        if (!texmacs_graph_lr_margins(fpdf,lr))
-          no_pdfcrop=true;
-        else ss << lr << " 0 " << lr << " 0";
-      }
-      string mrg=ss.str();
-      if (cleaned && !no_pdfcrop) {
-        status=system(("pdfcrop --margins '"+mrg+"' "+giac::to_unix_path(fpdf)+" "+giac::to_unix_path(fcrop)+silent_all).c_str());
-        cropped=system_status_ok(status);
-      }
-    }
-#endif
-    usleep(1000);
-    texmacs_begin();
-    printf("scheme:(htab \"\")");
-    texmacs_endbegin();
-    printf("file:%s", (cleaned?(cropped?fcrop:fpdf):feps).c_str());
-    texmacs_endbegin();
-    printf("scheme:(htab \"\")");
-    texmacs_end();
-    flush_stdout(200);
-    // delete temporary image files
-    remove(feps.c_str());
-    remove(fpdf.c_str());
-    remove(fclean.c_str());
-    remove(fcrop.c_str());
-  }
-#else
-  if (!xcas::fltk_view(g,gg,"casgraph.eps",figfilename,file_type,contextptr)){
-    putchar(TEXMACS_DATA_BEGIN);
-    printf("verbatim: Plot cancelled or unable to plot\n");
-    putchar(TEXMACS_DATA_END);
-    flush_stdout();
-    return;
-  }
-  if (0 
-      && figfilename.empty()
-      ){
-    putchar(TEXMACS_DATA_BEGIN);
-    if (gg.is_symb_of_sommet(giac::at_program))
-      printf("verbatim: %s\n",gg.print().c_str());
-    else {
-      if (gg.type==giac::_STRNG)
-        printf("verbatim: %s\n",gg._STRNGptr->c_str());
-      else 
-        printf("latex:\\[ %s \\]",giac::gen2tex(gg,giac::context0).c_str());
-    }
-  }
-  else {
-    putchar(TEXMACS_DATA_END);
-    // putchar(TEXMACS_DATA_END);
-    flush_stdout();
-    // putchar(TEXMACS_DATA_BEGIN);
-    // printf("output#");
-    putchar(TEXMACS_DATA_BEGIN);
-    printf("verbatim:");
-    ifstream tmpif("casgraph.eps");
-    ifstream_output(tmpif);
-    putchar(TEXMACS_DATA_END);
-    // putchar(TEXMACS_DATA_END);
-    flush_stdout();
-    // ofstream log("log");
-    // log << g << '\n';
-  }
-#endif
-#endif
 }
 
 void texmacs_output(const giac::gen & g,giac::gen & gg,bool reading_file,int no,const giac::context * contextptr){
@@ -780,443 +656,6 @@ void check_browser_help(const giac::gen & g){
   }
 }
 
-#ifdef HAVE_LIBFLTK
-//#include "Equation.h"
-// split s at newline or space to avoid too long strings
-void split(std::string & s,int cut){
-  if (cut<30) cut=30;
-  std::string remains(s);
-  s.clear();
-  int ss;
-  while ( (ss=remains.size())>cut ){
-    int i=0;
-    for (;i<cut;++i){
-      if (remains[i]=='\n')
-	break;
-    }
-    if (i<cut){
-      s = s+remains.substr(0,i+1);
-      remains=remains.substr(i+1,ss-i-1);
-      ss=remains.size();
-      continue;
-    }
-    for (i=cut-10;i<ss;++i){
-      if (remains[i]==' ' || remains[i]=='\\' || remains[i]=='(' || remains[i]==')' || remains[i]=='{' || remains[i]=='}' || remains[i]=='[' || remains[i]==']')
-	break;
-    }
-    s = s+remains.substr(0,i)+'\n';
-    remains=remains.substr(i,ss-i);
-    ss=remains.size();
-  }
-  s = s+remains;
-}
-
-string ltgt(const string & s){
-  int ss=s.size(),i;
-  string res;
-  for (i=0;i<ss-4;i++){
-    if (s[i]!='&' || s[i+2]!='t' || s[i+3]!=';'){
-      res += s[i];
-      continue;
-    }
-    if (s[i+1]=='l'){
-      res += '<';
-      i +=3;
-      continue;
-    }
-    if (s[i+1]=='g'){
-      res += '>';
-      i +=3;
-      continue;
-    }
-    res += s[i];
-  }
-  for (;i<ss;i++) res+=s[i];
-  return res;
-}
-
-void verb(std::string & warn,int line,ostream & out,std::string cmd_,const std::string & infile,int & texmacs_counter,bool slider,giac::context * contextptr,ostream * checkptr,std::ostream * checkptrin){
-  std::string cmd;
-  if (giac::python_compat(contextptr))
-    cmd="@@"+cmd_;
-  else
-    cmd=cmd_;
-  giac::gen g(cmd,contextptr),gg;
-  string gs=cmd;
-  split(cmd,50);
-  cmd=ltgt(cmd);
-  int pos=cmd.find('\n');
-  if (pos<0 || pos>=cmd.size())
-    pos=cmd.find('|');
-  if (pos<0 || pos>=cmd.size())
-    out << "\\verb|"<<cmd<<"|\\\\"<<'\n';
-  else
-    out << "\\begin{verbatim}\n" << cmd << "\\end{verbatim}" << '\n';
-  int reading_file=0;
-  std::string filename,tmp;
-  xcas::icas_eval(g,gg,reading_file,filename,contextptr);
-  if (checkptrin){
-    int ss=gs.size();
-    for (;ss>0;--ss){
-      if (gs[ss-1]!=' ' && gs[ss-1]!='\n')
-	break;
-    }
-    if (ss && gs[ss-1]!=';')
-      gs += ';';
-    *checkptrin << gs << '\n' ;
-  }
-  if (checkptr) *checkptr << gg << '\n';
-  int graph_output=graph_output_type(gg);
-  if (graph_output){
-    filename=infile+giac::print_INT_(texmacs_counter)+".eps";
-    if (xcas::fltk_view(g,gg,filename,tmp,-1,contextptr)){
-      out << "\n\\begin{center}\n\\includegraphics[width=0.8\\linewidth]{" << filename << "}\n\\end{center}\n"<<'\n';
-      ++texmacs_counter;
-    }
-  }
-  else {
-    if (slider) {
-      string tmp=gg.print(contextptr);
-      if (tmp.size()>256) tmp=tmp.substr(0,255)+"...";
-      warn +=  "Line " + giac::print_INT_(line)+" slider "+ g.print(contextptr)+ " -> " +tmp + '\n';
-      return;
-    }
-    int ta=taille(gg,41);
-    if (ta>=40){
-      string tmp=gg.print(contextptr);
-      if (tmp.size()>256) tmp=tmp.substr(0,255)+"...";
-      warn +=  "Line " + giac::print_INT_(line)+ " large output "+g.print(contextptr)+ " -> " +tmp + '\n';
-      // giac::attributs attr(14,0,1);
-      // giac::gen data=xcas::Equation_compute_size(g,attr,600,contextptr);
-    }
-    gg=giac::string2gen(giac::gen2tex(gg,contextptr),false);
-    std::string s=(gg.type==giac::_STRNG)?(*gg._STRNGptr):gg.print(contextptr);
-    out << "$$" << s << "$$" << '\n';
-  }  
-}
-
-void pgiac(std::string infile,std::string outfile,std::ostream * checkptr,std::ostream * checkptrin,bool dohevea){
-  COUT << "Giac pdflatex and HTML5 output" << '\n';
-  COUT << "Partly inspired from pgiac by Jean-Michel Sarlat" << '\n';
-  if (!giac::is_file_available("giac.tex")){
-    if (giac::is_file_available("/usr/share/giac/doc/giac.tex"))
-      giac::system_no_deprecation("cp /usr/share/giac/doc/giac.tex .");
-    else {
-      if (giac::is_file_available("/usr/local/share/giac/doc/giac.tex"))
-	giac::system_no_deprecation("cp /usr/local/share/giac/doc/giac.tex .");
-      else 
-	if (giac::is_file_available("/Applications/share/giac/doc/giac.tex"))
-	  giac::system_no_deprecation("cp /Applications/share/giac/doc/giac.tex .");
-    }
-  }
-  if (!giac::is_file_available("giacfr.tex")){
-    if (giac::is_file_available("/usr/share/giac/doc/giacfr.tex"))
-      giac::system_no_deprecation("cp /usr/share/giac/doc/giacfr.tex .");
-    else {
-      if (giac::is_file_available("/usr/local/share/giac/doc/giacfr.tex"))
-	giac::system_no_deprecation("cp /usr/local/share/giac/doc/giacfr.tex .");
-      else 
-	if (giac::is_file_available("/Applications/share/giac/doc/giacfr.tex"))
-	  giac::system_no_deprecation("cp /Applications/share/giac/doc/giacfr.tex .");
-    }
-  }
-  std::string infile_=giac::remove_extension(infile),warn;
-  int line=0;
-  giac::context ct;
-  debug_ptr(&ct)->debug_allowed=false;
-  ifstream in(infile.c_str());
-  ofstream out(outfile.c_str());
-  const int BUFFER_SIZE=32768-1;
-  char buf[BUFFER_SIZE+1];
-  buf[BUFFER_SIZE]=0;
-  bool inside=false,inprog=false,inverb=false;
-  int inhevea=0; // 1: \ifhevea, -1: \else
-  string prg;
-  for (;;){
-    if (in.eof())
-      break;
-    in.getline(buf,BUFFER_SIZE,'\n');++line;
-    string s(buf);
-    if (s.empty() && inside)
-      out << '\n';
-    for (;!s.empty();){
-      int ss=s.size();
-      int pos=0;
-      if (inhevea==1){
-	pos=s.find("\\fi");
-	if (pos>=0 && pos<ss){
-	  inhevea=0;
-	  break;
-	}
-	pos=s.find("\\else");
-	if (pos>=0 && pos<ss){
-	  inhevea=-1;
-	}
-	break;
-      }
-      if (inhevea){
-	pos=s.find("\\fi");
-	if (pos>=0 && pos<ss){
-	  inhevea=0;
-	  break;
-	}
-      }
-      else {
-	pos=s.find("\\ifhevea");
-	if (pos>=0 && pos<ss){
-	  inhevea=1;
-	  break;
-	}
-      }
-      if (inside){
-	if (!inverb){
-	  pos=s.find("\\verb");
-	  if (pos>=0 && pos<ss){
-	    out << s << '\n'; // ignore filtering if \verb inside
-	    break;
-	  }
-	  pos=s.find("\\begin{verbatim}");
-	  if (pos>=0 && pos<ss){
-	    inverb=true;
-	    out << s << '\n';
-	    break;
-	  }
-	}
-	pos=s.find("\\end{verbatim}");
-	if (pos>=0 && pos<ss){
-	  inverb=false;
-	  out << s << '\n';
-	  break;
-	}
-      }
-      pos=s.find("%");
-      while (pos>0 && s[pos-1]=='\\')
-	pos=s.find("%",pos+1);
-      if (pos>=0 && pos<ss){
-	int pos1=s.find("{"),pos2=s.find("}");
-	if (pos1<0 || pos1>=pos || pos2<0 || pos2>=ss){ 
-	  s=s.substr(0,pos); // should check % inside verb/verbatim
-	  continue;
-	}
-      }
-      if (!inside){
-	int pos=s.find("\\begin{document}");
-	if (pos>=0 && pos<ss){
-	  out << "\\usepackage{graphicx}\n\\usepackage{xcolor}\n\\newcommand{\\MarqueCommandeGiac}[1]{\n\\color[HTML]{8B7500}$\\rightarrow$}\n\\newcommand{\\MarqueLaTeXGiac}{%\n\\color[HTML]{08868B}}\n\\newcommand{\\InscriptionFigureGiac}[1]{%\n\\begin{center}\n\\includegraphics[width=0.7\\linewidth]{#1}\n\\end{center}\n}" << '\n';
-	  inside=true;
-	}
-      }
-      else {
-	int pos=s.find("\\end{document}");
-	if (pos>=0 && pos<ss){
-	  out << s << '\n';
-	  out.close();
-	  COUT << "File " << outfile << " created" << outfile << '\n' << "Then I will run pdflatex " << giac::remove_extension(outfile) << '\n' ;
-	  if (dohevea){
-	    std::string cmd="hevea2mml "+infile_+" &";
-	    COUT << "Running " << cmd << '\n';
-	    giac::system_no_deprecation(cmd.c_str());
-	  }
-	  else
-	    COUT << "For HTML5 output, you can run\nhevea2mml " << infile_ << '\n';
-	  std::string cmd="makeindex "+giac::remove_extension(outfile);
-	  giac::system_no_deprecation(cmd.c_str());
-	  cmd=("pdflatex "+giac::remove_extension(outfile)+" && mv "+giac::remove_extension(outfile)+".pdf "+infile_+".pdf");
-	  COUT << cmd << '\n';
-	  giac::system_no_deprecation(cmd.c_str());
-	  if (!warn.empty()){
-	    COUT << "*********************************" << '\n';
-	    COUT << "*********************************" << '\n';
-	    COUT << "Please take care of the warnings below. Press ENTER to continue" << '\n' << warn;
-	    COUT << "*********************************" << '\n';	    
-	    COUT << "*********************************" << '\n';
-	  }
-	  return;
-	}
-      }
-      if (inprog){
-	pos=s.find("\\end{giacprog}");
-	int decal=16;
-	bool hide=false;
-	if (pos<0 || pos>=ss){
-	  pos=s.find("\\end{giaconload}");
-	  if (pos<0 || pos>=ss){
-	    pos=s.find("\\end{giaconloadhide}");
-	    decal=20;
-	    hide=true;
-	  }
-	}
-	else
-	  decal=14;
-	if (pos>=0 && pos<ss){
-	  prg += s.substr(0,pos);
-	  if (hide){
-	    if (prg.substr(prg.size()-3,3)==":;\n")
-	      prg=prg.substr(0,prg.size()-3);
-	  }
-	  else
-	    out << "\\begin{verbatim}\n" << prg << "\\end{verbatim}" << '\n';
- 	  if (giac::python_compat(&ct))
-	    prg="@@"+prg;
-	  giac::gen g(prg,&ct),gg;
-	  int reading_file=0;
-	  std::string filename;
-	  xcas::icas_eval(g,gg,reading_file,filename,&ct);  
-	  if (checkptrin){
-	    string gs=prg;
-	    int ss=gs.size();
-	    for (;ss>0;--ss){
-	      if (gs[ss-1]!=' ' && gs[ss-1]!='\n')
-		break;
-	    }
-	    if (ss && gs[ss-1]!=';')
-	      gs += ';';
-	    *checkptrin << gs << '\n' ;
-	  }
-	  if (checkptr) *checkptr << gg << '\n';
-	  s=s.substr(pos+decal,ss-decal-pos);
-	  inprog=false;
-	  int graph_output=graph_output_type(gg);
-	  if (graph_output){
-	    filename=giac::remove_extension(infile)+giac::print_INT_(texmacs_counter)+".eps";
-	    string tmp;
-	    if (xcas::fltk_view(g,gg,filename,tmp,-1,&ct)){
-	      out << "\n\\begin{center}\n\\includegraphics[width=0.8\\linewidth]{" << filename << "}\n\\end{center}\n"<<'\n';
-	      ++texmacs_counter;
-	    }
-	  }
-	  continue;
-	}
-	prg += s + '\n';
-	break; // read next line until \end{giacprog}
-      }
-      pos=s.find("\\begin{giacprog}");
-      if (pos>=0 && pos<ss){
-	prg = "";
-	s=s.substr(pos+16,ss-16-pos);
-	inprog=true;
-	continue;
-      }
-      pos=s.find("\\begin{giaconload}");
-      if (pos>=0 && pos<ss){
-	prg = "";
-	s=s.substr(pos+18,ss-18-pos);
-	inprog=true;
-	continue;
-      }
-      pos=s.find("\\begin{giaconloadhide}");
-      if (pos>=0 && pos<ss){
-	prg = "";
-	s=s.substr(pos+22,ss-22-pos);
-	inprog=true;
-	continue;
-      }
-      pos=s.find("\\giac");
-      if (inside && pos>=0 && pos<ss){
-	out << s.substr(0,pos) << '\n';
-	s=s.substr(pos,ss-pos);
-	ss=s.size();
-	if (s=="\\giacpython" ){
-	  giac::python_compat(1,&ct);
-	  s=s.substr(pos+11,ss-pos-11);
-	  continue;
-	}
-	bool invalid=false;
-	int pos1=s.find("{"),pos2=s.find("}");
-	while ( (pos1>=0 && pos1<ss ) && (pos2<0 || pos2>=ss)){
-	  // scan file until matching }
-	  if (in.eof())
-	    break;
-	  in.getline(buf,BUFFER_SIZE,'\n');++line;
-	  string adds(buf);
-	  s += adds; ss=s.size();
-	  pos2=s.find("}");
-	}
-	if (ss>10 && s.substr(1,8)=="giaclink" && pos1>=0 && pos1<ss && pos2>=0 && pos2<ss){
-	  out << s.substr(0,pos2+1) << '\n';
-	  s=s.substr(pos2+1,ss-pos2-1);
-	  continue;
-	}
-	if (ss>20 && s.substr(1,10)=="giacslider" && pos1>=0 && pos1<ss && pos2>=0 && pos2<ss){
-	  string cmd=s.substr(pos1+1,pos2-pos1-1)+":=";
-	  for (int j=2;j<6;++j){
-	    s=s.substr(pos2+1,ss-pos2-1);
-	    ss=s.size();
-	    pos1=s.find("{");pos2=s.find("}");
-	    while ( (pos1>=0 && pos1<ss ) && (pos2<0 || pos2>=ss)){
-	      // scan file until matching }
-	      if (in.eof())
-		break;
-	      in.getline(buf,BUFFER_SIZE,'\n'); ++line;
-	      string adds(buf);
-	      s += adds; ss=s.size();
-	      pos2=s.find("}");
-	    }
-	    if (pos1>=0 && pos1<ss && pos2>=0 && pos2<ss)
-	      continue;
-	    invalid=true;
-	  }
-	  if (!invalid){
-	    cmd += s.substr(pos1+1,pos2-pos1-1);
-	    s=s.substr(pos2+1,ss-pos2-1);
-	    ss=s.size();
-	    pos1=s.find("{");pos2=s.find("}");
-	    while ( (pos1>=0 && pos1<ss ) && (pos2<0 || pos2>=ss)){
-	      // scan file until matching }
-	      if (in.eof())
-		break;
-	      in.getline(buf,BUFFER_SIZE,'\n'); ++line;
-	      string adds(buf);
-	      s += adds; ss=s.size();
-	      pos2=s.find("}");
-	    }
-	    if (pos1>=0 && pos1<ss && pos2>=0 && pos2<ss){
-	      cmd += ';'+s.substr(pos1+1,pos2-pos1-1);
-	      s=s.substr(pos2+1,ss-pos2-1);
-	      ss=s.size();
-	      verb(warn,line,out,cmd,infile_,texmacs_counter,true,&ct,checkptr,checkptrin);
-	    }
-	  }
-	  continue;
-	}
-	if (ss>10 && s.substr(1,7)=="giaccmd" && pos1>=0 && pos1<ss && pos2>=0 && pos2<ss){
-	  string cmd=s.substr(pos1+1,pos2-pos1-1);
-	  s=s.substr(pos2+1,ss-pos2-1);
-	  ss=s.size();
-	  pos1=s.find("{");pos2=s.find("}");
-	  while ( (pos1>=0 && pos1<ss ) && (pos2<0 || pos2>=ss)){
-	    // scan file until matching }
-	    if (in.eof())
-	      break;
-	    in.getline(buf,BUFFER_SIZE,'\n'); ++line;
-	    string adds(buf);
-	    s += adds; ss=s.size();
-	    pos2=s.find("}");
-	  }
-	  cmd = cmd + '('+s.substr(pos1+1,pos2-pos1-1)+')';
-	  verb(warn,line,out,cmd,infile_,texmacs_counter,false,&ct,checkptr,checkptrin); 
-	  s=s.substr(pos2+1,ss-pos2-1);	
-	  continue;
-	}
-	if (pos1>0 && pos1<ss && pos2>0 && pos2<ss){
-	  string cmd=s.substr(pos1+1,pos2-pos1-1);
-	  verb(warn,line,out,cmd,infile_,texmacs_counter,false,&ct,checkptr,checkptrin); 
-	  s=s.substr(pos2+1,ss-pos2-1);
-	  continue;
-	}
-	else
-	  COUT << "Invalid giac command " << s << '\n';
-      }
-      out << s << '\n';
-      break;
-    }
-  }
-  out.close();
-  COUT << "Missing \\end{document}. File " << outfile << " created" << '\n';
-  //giac::system_no_deprecation(("pgiac "+outfile).c_str());
-}
-
-#else
 void pgiac(std::string infile,std::string outfile,std::ostream * checkptr,std::ostream * checkptrin,bool dohevea){
   ifstream in(infile.c_str());
   ofstream out(outfile.c_str());
@@ -1401,7 +840,6 @@ void pgiac(std::string infile,std::string outfile,std::ostream * checkptr,std::o
   COUT << "Missing \\end{document}. File " << outfile << " created, now running pgiac" << '\n';
   giac::system_no_deprecation(("pgiac "+outfile).c_str());
 }
-#endif
 
 int micropyjs_evaled(string & s,const giac::context * contextptr){
 #ifdef QUICKJS
@@ -1493,16 +931,6 @@ int main(int ARGC, char *ARGV[]){
   bool intexmacs=((ARGC>=2) && std::string(ARGV[1])=="--texmacs");
   if (intexmacs) suspend_stderr(); // suppress stderr output when in texmacs (L. Marohnić)
   if (getenv("GIAC_WARN")) giac::warn_symb_program_sto=atoi(getenv("GIAC_WARN"));
-#ifdef HAVE_LIBFLTK
-#if !defined(__APPLE__) && !defined(WIN32)
-  if (getenv("DISPLAY"))
-#endif    
-    xcas::fonts_available=Fl::set_fonts(0);
-#ifndef USE_OBJET_BIDON
-  xcas::localisation(); // change by L. Marohnić
-#endif
-  giac::__get_key.op=&xcas::Xcas_fltk_getKey;
-#endif
   //giac::step_infolevel=1;
   cerr << "// Maximum number of parallel threads " << giac::threads << '\n';
   giac::context giac_context;
@@ -1535,14 +963,6 @@ int main(int ARGC, char *ARGV[]){
   //cerr << giac::remove_filename(ARGV[0]) << '\n';
 #ifdef HAVE_LIBGSL
   gsl_set_error_handler_off();
-#endif
-#ifdef HAVE_LIBFLTK
-#if !defined(__APPLE__) && !defined(WIN32)
-  if (getenv("DISPLAY"))
-#endif
-#ifdef HAVE_LIBFLTK_GL
-    Fl::gl_visual(FL_RGB | FL_DEPTH | FL_ACCUM | FL_ALPHA);
-#endif
 #endif
   giac::secure_run=false;
 #if !defined EMCC && !defined EMCC2 && !defined NSPIRE_NEWLIB && !defined KHICAS
@@ -1912,11 +1332,6 @@ int main(int ARGC, char *ARGV[]){
 	  if ( (g.type==giac::_SYMB) && (g._SYMBptr->sommet==giac::at_xyztrange) && (g._SYMBptr->feuille.type==giac::_VECT) && (g._SYMBptr->feuille._VECTptr->size()<12) ){
 	    printf("Done\n");
 	    putchar(EMACS_DATA_END); // end answer
-#ifdef HAVE_LIBFLTK
-	    xcas::Xcas_load_graph_setup(contextptr);
-	    Fl::run();
-	    Fl::wait(0.001);
-#endif
 	    giac::history_in(contextptr).push_back(g);
 	    giac::history_out(contextptr).push_back(gg);
 	    continue;
@@ -1924,36 +1339,12 @@ int main(int ARGC, char *ARGV[]){
 
 	  int reading_file=0;
 	  std::string filename;
-#ifdef HAVE_LIBFLTK
-	  xcas::icas_eval(g,gg,reading_file,filename,contextptr);
-	  if (reading_file>=1 || graph_output_type(gg)){
-            if (inmcp){
-              printf("Close the graphic window before running next command\n");
-              putchar(EMACS_DATA_END);
-              fflush(stdout);
-              xcas::fltk_view(g,gg,"",filename,reading_file,contextptr);
-            }
-            else {
-              printf(xcas::fltk_view(g,gg,"",filename,reading_file,contextptr)?"Done\n":"Plot cancelled or unable to plot\n");
-              putchar(EMACS_DATA_END);
-              fflush(stdout);
-            }
-          }
-	  else {
-	    giac::history_in(contextptr).push_back(g);
-	    giac::history_out(contextptr).push_back(gg);
-	    printf("%s\n",gg.print(contextptr).c_str());
-            putchar(EMACS_DATA_END);
-            fflush(stdout);
-	  }
-#else
           gg=eval(g,1,contextptr);
           giac::history_in(contextptr).push_back(g);
           giac::history_out(contextptr).push_back(gg);
           printf("%s\n",gg.print(contextptr).c_str());
 	  putchar(EMACS_DATA_END);
           fflush(stdout);
-#endif
 #ifdef EMACS_DEBUG
 	  logfile << "evaled: " << gg.print(contextptr) << "\n" ;
 #endif
@@ -2124,12 +1515,7 @@ int main(int ARGC, char *ARGV[]){
       giac::messages_to_print="";
 #endif
       if (buffer=="xcas"){
-#if 0 // def HAVE_LIBFLTK
-	giac::gen ge; std::string filename;
-	xcas::fltk_view(0,ge,"session.xws",filename,5,contextptr);
-#else
         giac::system_browser_command("xcas.html");        
-#endif
 	continue;
       }
       giac::gen g(buffer,contextptr),gg;
@@ -2140,11 +1526,6 @@ int main(int ARGC, char *ARGV[]){
       // END ONLINE HELP
       // GEO SETUP
       if ( (g.type==giac::_SYMB) && (g._SYMBptr->sommet==giac::at_xyztrange) && (g._SYMBptr->feuille.type==giac::_VECT) && (g._SYMBptr->feuille._VECTptr->size()<12) ){
-#ifdef HAVE_LIBFLTK
-        xcas::Xcas_load_graph_setup(contextptr);
-        Fl::run();
-        Fl::wait(0.001);
-#endif
         giac::history_in(contextptr).push_back(g);
         giac::history_out(contextptr).push_back(gg);
         printf("Done\n");
@@ -2160,11 +1541,7 @@ int main(int ARGC, char *ARGV[]){
       // END GEO SETUP
       int reading_file=0;
       std::string filename;
-#ifdef HAVE_LIBFLTK
-      xcas::icas_eval(g,gg,reading_file,filename,contextptr);
-#else
       gg=eval(g,1,contextptr);
-#endif
       bool done=false;
       if (reading_file){ 
         if (reading_file>=2 || (giac::ckmatrix(gg,true)&&gg.subtype==giac::_SPREAD__VECT) ){
@@ -2190,10 +1567,6 @@ int main(int ARGC, char *ARGV[]){
         }
       }
       if (!done) {
-#ifdef HAVE_LIBFLTK
-        if (g.type==giac::_SYMB && gg.is_symb_of_sommet(giac::at_pnt) && gg.subtype>=0 && equalposcomp(giac::implicittex_plot_sommets,g._SYMBptr->sommet))
-          ;// set_view_point(0,0); // FIXME
-#endif
         texmacs_output(g,gg,false,0,contextptr);
         texmacs_counter++;
       }
@@ -2260,9 +1633,6 @@ int main(int ARGC, char *ARGV[]){
     cout << "Press CTRL and D simultaneously to finish session" << '\n';
 #endif
     cout << "Type ?commandname for help" << '\n';
-#ifdef HAVE_LIBFLTK
-    cout << icas_gettext("*** Type xcas to launch a light version of Xcas ***\n");
-#endif
     for (int count=0;;++count) {
       char * res=rl_gets(count);
       if (!res)
@@ -2278,23 +1648,10 @@ int main(int ARGC, char *ARGV[]){
 #endif
 	continue;
       }
-#if 0 // def HAVE_LIBFLTK
-      if (s=="!xcas"){
-	system("./xcas");
-	printf("%s\n","Running ./xcas");
-	continue;
-      }
-      if (s=="xcas"){
-	giac::gen ge; std::string filename;
-	xcas::fltk_view(0,ge,"session.xws",filename,5,contextptr);
-	continue;
-      }
-#else
       if (s=="xcas"){
         giac::system_browser_command("xcas.html");
         continue;
       }
-#endif
       if (s=="giac"){
 	python_compat(python_compat(contextptr)&3,contextptr);
 	printf("%s\n","Switching to giac interpreter");
@@ -2389,11 +1746,6 @@ int main(int ARGC, char *ARGV[]){
       // 2-d plot?
       int graph_output=graph_output_type(ge);
       if (reading_file>=2 || graph_output || (giac::ckmatrix(ge,true) &&ge.subtype==giac::_SPREAD__VECT) ){
-#ifdef HAVE_LIBFLTK
-	if (xcas::fltk_view(gq,ge,"",filename,reading_file,contextptr))
-	  cout << "Done";
-	else
-#endif
 	  cout << "Plot cancelled or unable to plot";
       }
       else {
@@ -2517,11 +1869,7 @@ int main(int ARGC, char *ARGV[]){
 #ifdef __APPLE__
       startc=clock();
 #endif
-#ifdef HAVE_LIBFLTK
-      xcas::icas_eval(gq,e,reading_file,filename,contextptr);
-#else
       e=eval(gq,1,contextptr);
-#endif
 #ifdef __APPLE__
       startc=clock()-startc;
 #endif

@@ -384,3 +384,12 @@ summary({
 
 subdir('src')
 subdir('tests')
+
+# ── pkg-config file (after src/ so libgiac is defined) ───────────────────────
+
+pkg = import('pkgconfig')
+pkg.generate(libgiac,
+  name: 'giac',
+  description: 'Giac Computer Algebra System library',
+  url: 'https://www-fourier.ujf-grenoble.fr/~parisse/giac.html',
+)

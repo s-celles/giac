@@ -1,5 +1,4 @@
-# GUI and bindings
-option('gui',          type: 'feature', value: 'auto', description: 'Build xcas GUI (FLTK), libxcas, icas, aide')
+# Bindings
 option('jni',          type: 'feature', value: 'auto', description: 'Build libjavagiac JNI bindings')
 
 # Optional math libraries

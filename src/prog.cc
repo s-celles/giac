@@ -125,16 +125,6 @@ int emfltkdbg=0; // set to 1 to enable emscripten_loop inside debugger
 #include "kdisplay.h"
 #endif
 
-#if defined EMCC2 && defined HAVE_LIBFLTK
-#include <FL/Fl_Group.H>
-#include <FL/Fl_Hold_Browser.H>
-#include <FL/Fl_Return_Button.H>
-#include <FL/Fl_Tooltip.H>
-#include "hist.h"
-#include "Xcas1.h"
-Fl_Group * emdbg_w=0;
-#endif
-
 #ifndef NO_NAMESPACE_GIAC
 namespace giac {
 #endif // ndef NO_NAMESPACE_GIAC
@@ -6151,9 +6141,6 @@ namespace giac {
   gen _debug(const gen & args,GIAC_CONTEXT){
     if ( args.type==_STRNG &&  args.subtype==-1) return  args;
 #ifdef EMCC2
-#ifdef HAVE_LIBFLTK
-    *logptr(contextptr) << "Hint: run debug from Prg menu for a better user interface\n";
-#endif
 #else
     if (child_id && thread_eval_status(contextptr)!=1)
       return args;
@@ -6554,65 +6541,6 @@ namespace giac {
       }
     }
     w.push_back(dw);
-#if defined EMCC2 && defined HAVE_LIBFLTK
-    static  Fl_Hold_Browser * prgsrc_browser=0,*var_browser=0;
-    static Fl_Button * button1=0,*button2=0,*button3=0,*button4=0;
-    if (emfltkdbg){
-      if (emdbg_w==0){
-	Fl_Group::current(xcas::Xcas_Main_Window);
-	int dx=500,dy=400,L=xcas::Xcas_MainTab->labelsize();
-	emdbg_w=new Fl_Group(0,0,dx,dy);
-	prgsrc_browser = new Fl_Hold_Browser(2,2,dx-2,dy/2-(L+4));
-	prgsrc_browser->format_char(0);
-	prgsrc_browser->type(2);
-	prgsrc_browser->label(gettext("Source"));
-	prgsrc_browser->align(FL_ALIGN_TOP);
-	prgsrc_browser->labeltype(FL_NO_LABEL);
-	int ypos=prgsrc_browser->y()+prgsrc_browser->h()+2;
-	button1 = new Fl_Button(2,ypos,dx/4-4,L+2);
-	button1->shortcut(0xff0d);
-	button1->label(gettext("sst"));
-	button1->tooltip(gettext("Click to execute next step"));
-	button2 = new Fl_Button(dx/4,ypos,dx/4-4,L+2);
-	button2->label(gettext("in"));
-	button2->tooltip(gettext("Click to step in function"));
-	button3 = new Fl_Button(2*dx/4+2,ypos,dx/4-4,L+2);
-	button3->label(gettext("cont"));
-	button3->tooltip(gettext("Click to continue non stop"));
-	button4 = new Fl_Button(3*dx/4+2,ypos,dx/4-4,L+2);
-	button4->shortcut(0xff1b);
-	button4->label(gettext("Click to cancel"));
-	ypos += L+4;
-	var_browser = new Fl_Hold_Browser(prgsrc_browser->x(),ypos,prgsrc_browser->w(),prgsrc_browser->h());
-	var_browser->label("Local variables");
-	var_browser->type(2);
-	var_browser->align(FL_ALIGN_TOP);
-	var_browser->labeltype(FL_NO_LABEL);
-	emdbg_w->end();
-	emdbg_w->resizable(emdbg_w);
-	Fl_Group::current(0);
-      }
-      prgsrc_browser->clear();
-      var_browser->clear();
-      if (w[4].type==_INT_){
-	vector<string> ws;
-	ws.push_back("");
-	debug_print(w[2],ws,contextptr);
-	// int m=giacmax(0,w[4].val-2),M=giacmin(w[4].val+3,ws.size()-1);
-	int m=0,M=ws.size()-1;
-	for (int i=m;i<=M;++i){
-	  prgsrc_browser->add((print_INT_(i)+((i==w[4].val)?" => ":"    ")+ws[i]).c_str());
-	}
-	prgsrc_browser->value(w[4].val-m+1);
-      }
-      else {
-	string s=w[2].print(contextptr);
-	progs += "\nprg: "+s+" # "+w[4].print(contextptr);
-	prgsrc_browser->add(progs.c_str());
-      }
-    }
-    else 
-#endif
       {
 	// print debugged program instructions from current-2 to current+3
 	progs="debug "+w[0].print(contextptr)+'\n';
@@ -6642,12 +6570,6 @@ namespace giac {
       string s=tmp.print(contextptr);
       if (s.size()>100) s=s.substr(0,97)+"...";
       evals += s;
-#if defined EMCC2 && defined HAVE_LIBFLTK
-      if (emfltkdbg){
-	var_browser->add(evals.c_str());
-	evals="";
-      } else
-#endif
 	{
 	  evals += ",";
 	  if (nvars<4 || (nv % 2)==1 || nv==nvars-1)
@@ -6659,64 +6581,6 @@ namespace giac {
     w.push_back(dw);
     debug_ptr(contextptr)->debug_allowed=true;
     *dbgptr->debug_info_ptr=w;
-#if defined EMCC2 && defined HAVE_LIBFLTK
-    if (emfltkdbg){
-      Fl_Window * mainw=xcas::Xcas_Main_Window;
-      if (mainw){
-	int X=xcas::Xcas_MainTab->x(),Y=xcas::Xcas_MainTab->y(),W=xcas::Xcas_MainTab->w(),H=xcas::Xcas_MainTab->h();
-	if (xcas::Xcas_MainTab){
-	  emdbg_w->resize(X,Y,W,H);
-	  xcas::change_group_fontsize(emdbg_w,xcas::Xcas_MainTab->labelsize());
-	  xcas::Xcas_MainTab->hide();
-	  emdbg_w->show();
-	}
-      }
-      int r=0;
-      for (;;) {
-	Fl_Widget *o = Fl::readqueue();
-	if (!o){
-	  if (xcas::Xcas_Main_Window)
-	    Xcas_emscripten_main_loop();
-	  else
-	    Fl::wait();
-	}
-	else {
-	  if (o == button1) {r = -1; break;} // sst
-	  if (o == button2) {r = -2; break;} // in
-	  if (o == button3) {r = -3; break;} // cont
-	  if (o == button4) {r = -4; break;} // kill
-	}
-      }
-      if (xcas::Xcas_MainTab) xcas::Xcas_MainTab->show();
-      emdbg_w->hide();
-      if (r==-1){
-	dbgptr->sst_in_mode=false;
-	dbgptr->sst_mode=true;
-	return;
-      }
-      if (r==-2){
-	dbgptr->sst_in_mode=true;
-	dbgptr->sst_mode=true;
-	return;
-      }
-      if (r==-3){
-	dbgptr->sst_in_mode=false;
-	dbgptr->sst_mode=false;
-	return;
-      }
-      if (r==-4){
-	if (!contextptr)
-	  protection_level=0;
-	debug_ptr(contextptr)->debug_mode=false;
-	debug_ptr(contextptr)->current_instruction_stack.clear();
-	debug_ptr(contextptr)->sst_at_stack.clear();
-	debug_ptr(contextptr)->args_stack.clear();
-	ctrl_c=interrupted=true;
-	return;
-      }
-      return ; // should never be reached
-    } else
-#endif // EMCC2 && FLTK
       {
 	// dbgptr->debug_refresh=false;
 	// need a way to pass w to EM_ASM like environment and call HTML5 prompt
