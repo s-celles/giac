@@ -102,9 +102,52 @@ if not get_option('gui').disabled()
   # Try system FLTK via fltk-config
   fltk_dep = dependency('fltk', method: 'config-tool', required: false)
 
+  # On macOS, Homebrew's fltk@1.3 is keg-only — try its fltk-config explicitly
+  if not fltk_dep.found() and host_machine.system() == 'darwin'
+    foreach _fltk13_path : ['/opt/homebrew/opt/fltk@1.3/bin/fltk-config',
+                            '/usr/local/opt/fltk@1.3/bin/fltk-config']
+      _fltk13 = find_program(_fltk13_path, required: false)
+      if _fltk13.found()
+        # Use fltk-config to get compile/link flags manually
+        _fltk_cflags = run_command(_fltk13, '--cflags', check: true).stdout().strip()
+        _fltk_ldflags = run_command(_fltk13, '--use-gl', '--use-images', '--ldflags',
+          check: true).stdout().strip()
+        _fltk_ver = run_command(_fltk13, '--version', check: true).stdout().strip()
+        # FLTK's --use-images emits -lpng/-ljpeg without -L paths on Homebrew.
+        # Use Meson's own png/jpeg deps for proper library resolution.
+        _fltk_link_args = []
+        foreach _f : _fltk_ldflags.split()
+          if _f != '-lpng' and _f != '-ljpeg'
+            _fltk_link_args += _f
+          endif
+        endforeach
+        _fltk_img_deps = [
+          dependency('libpng', required: false),
+          dependency('libjpeg', required: false),
+        ]
+        fltk_dep = declare_dependency(
+          compile_args: _fltk_cflags.split(),
+          link_args: _fltk_link_args,
+          dependencies: _fltk_img_deps,
+          version: _fltk_ver,
+        )
+        break
+      endif
+    endforeach
+  endif
+
   if not fltk_dep.found()
-    # Try pkg-config
+    # Try pkg-config / cmake fallback
     fltk_dep = dependency('fltk', required: get_option('gui'))
+  endif
+
+  # Warn if FLTK 1.4 is found — giac GUI requires 1.3.x
+  if fltk_dep.found() and fltk_dep.version().version_compare('>= 1.4.0')
+    warning('FLTK ' + fltk_dep.version() + ' detected but giac GUI requires FLTK 1.3.x. ' +
+            'On macOS: brew install fltk@1.3')
+    if not get_option('gui').enabled()
+      fltk_dep = dependency('', required: false)
+    endif
   endif
 
   if fltk_dep.found()
@@ -116,6 +159,20 @@ if build_gui
   # Optional GL and X11 for GUI
   gl_dep = dependency('gl', required: false)
   x11_dep = dependency('x11', required: false)
+
+  # GUI compile args: base args + FLTK/GL defines
+  gui_args = giac_common_args + ['-DHAVE_LIBFLTK']
+  if gl_dep.found()
+    gui_args += ['-DHAVE_LIBFLTK_GL']
+  endif
+
+  # GUI sources use #include "giac/first.h" — create a symlink so that
+  # src/giac/ -> src/ allows the include to resolve from src/
+  _giac_symlink = run_command('sh', '-c',
+    'test -e "' + meson.current_source_dir() / 'giac' + '" || ' +
+    'ln -s "." "' + meson.current_source_dir() / 'giac' + '"',
+    check: false,
+  )
 
   gui_deps = [libgiac_dep, fltk_dep]
   if gl_dep.found()
@@ -139,8 +196,8 @@ if build_gui
     xcas_lib_sources,
     include_directories: [giac_inc, config_inc],
     dependencies: gui_deps,
-    c_args: giac_common_args,
-    cpp_args: giac_common_args,
+    c_args: gui_args,
+    cpp_args: gui_args,
     install: true,
     version: '0.0.0',
     soversion: '0',
@@ -156,8 +213,8 @@ if build_gui
   executable('xcas',
     files('xcas.cxx'),
     dependencies: [libgiac_dep, libxcas_dep],
-    c_args: giac_common_args,
-    cpp_args: giac_common_args,
+    c_args: gui_args,
+    cpp_args: gui_args,
     install: true,
   )
 
@@ -169,8 +226,8 @@ if build_gui
   executable('icas',
     files('icas.cc'),
     dependencies: icas_deps,
-    c_args: giac_common_args,
-    cpp_args: giac_common_args,
+    c_args: gui_args,
+    cpp_args: gui_args,
     install: true,
   )
 
@@ -178,8 +235,8 @@ if build_gui
   executable('aide',
     files('aide.cc'),
     dependencies: [libgiac_dep, libxcas_dep],
-    c_args: giac_common_args,
-    cpp_args: giac_common_args,
+    c_args: gui_args,
+    cpp_args: gui_args,
     install: true,
   )
 endif
