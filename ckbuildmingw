@@ -1,2 +1,0 @@
-#! /bin/bash
-julia build_tarballs.jl --verbose --debug x86_64-w64-mingw32

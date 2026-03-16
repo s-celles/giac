@@ -9,56 +9,19 @@
 # Top-level files
 # -----------------------------------------------------------------------------
 !.gitignore
-!ABOUT-NLS
-!addu.cc
-!archive.mingw
-!AUTHORS
-!build_for_iphoneos
-!build_tarballs.jl
-!ChangeLog
-!changeversion
-!ckbuildfree
-!ckbuildmacx86
-!ckbuildmingw
-!compile.android
-!compte
+!.gitmodules
+!AUTHORS.md
+!BUILD_WITH_MESON.md
+!CHANGELOG.md
 !COPYING
-!fltk.1.1.changes
 !fltk-1.3.8-source.tar.bz2
-!giac_fltk_changes
-!giac.specs
-!giac.specs32
-!Init.scm
-!inst
-!INSTALACION
-!INSTALL
-!java.README
-!LEAME.ipaq
-!LEAME.WIN
-!LISEZMOI.numworks
+!justfile
 !meson.build
 !meson_options.txt
-!BUILD_WITH_MESON.md
-!mkdebian
-!mkdebian2
-!mkdebian32
-!mkinstalldirs
-!mkiphone
-!mkmacx86
-!mkosx
-!mkosx10
-!mkosx3
-!mkrpm
-!NEWS
-!pariinl.h
-!README
-!README
-!setup
-!TODO
-!TROUBLES
-!win
-!win2unix.cc
-!win64
+!NEWS.md
+!README.md
+!TODO.md
+!TROUBLESHOOTING.md
 
 # -----------------------------------------------------------------------------
 # Directories (must allow dir first, then contents recursively)
@@ -67,8 +30,6 @@
 !check/**
 !debian/
 !debian/**
-!debianold/
-!debianold/**
 !doc/
 !doc/**
 !examples/
@@ -76,7 +37,6 @@
 !icons/
 !icons/**
 !micropython
-!.gitmodules
 !po/
 !po/**
 !cross/
