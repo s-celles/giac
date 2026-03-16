@@ -1,6 +1,8 @@
 # Building giac with Meson
 
-This document describes how to build giac and its components using the Meson build system.
+This document describes how to build the GIAC CAS library and CLI tools using the Meson build system.
+
+> **Note**: The Xcas GUI has been moved to a [separate repository](https://github.com/s-celles/xcas). This document covers libgiac, icas (CLI shell), and aide (help tool) only.
 
 ## Prerequisites
 
@@ -16,6 +18,14 @@ meson setup builddir
 meson compile -C builddir
 meson test -C builddir        # run test suite
 meson install -C builddir     # install to prefix
+```
+
+Or using the justfile:
+
+```bash
+just setup
+just build
+just test
 ```
 
 ## Installing Prerequisites
@@ -37,8 +47,8 @@ sudo dnf install meson ninja-build gcc gcc-c++ gmp-devel mpfr-devel
 ```bash
 brew install meson ninja gmp mpfr
 
-# Optional: GUI and additional libraries
-brew install fltk readline
+# Optional
+brew install readline
 ```
 
 ### FreeBSD
@@ -67,22 +77,19 @@ The Meson build produces the following targets:
 | Target | Type | Description | Condition |
 |--------|------|-------------|-----------|
 | libgiac | static + shared | Core CAS library | Always |
-| icas | executable | Interactive CLI shell | Always (enhanced with FLTK if available) |
+| icas | executable | Interactive CLI shell | Always |
 | aide | executable | Help tool | Always |
 | hevea2mml | executable | LaTeX to MathML | Always |
-| libxcas | shared | FLTK GUI library | `-Dgui=enabled` + FLTK |
-| xcas | executable | Graphical CAS | `-Dgui=enabled` + FLTK |
 | libjavagiac | shared | JNI bindings for Java | `-Djni=enabled` + JDK headers |
 
 ## Build Options
 
 All feature options accept `auto` (detect), `enabled` (require), or `disabled` (skip).
 
-### GUI and Bindings
+### Bindings
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `gui` | auto | Build xcas GUI (requires FLTK) |
 | `jni` | auto | Build Java bindings (libjavagiac) |
 
 ### Optional Math Libraries
@@ -127,18 +134,18 @@ All feature options accept `auto` (detect), `enabled` (require), or `disabled` (
 ### Usage Examples
 
 ```bash
-# Minimal build (libgiac only, no GUI)
-meson setup builddir -Dgui=disabled
+# Default build (auto-detect optional deps)
+meson setup builddir
 
 # Full build with all optional deps required
-meson setup builddir -Dgui=enabled -Dpari=enabled -Dntl=enabled \
+meson setup builddir -Dpari=enabled -Dntl=enabled \
   -Dgsl=enabled -Dlapack=enabled
 
 # Disable LAPACK explicitly
 meson setup builddir -Dlapack=disabled
 
 # Reconfigure an existing build
-meson configure builddir -Dlapack=disabled -Dgui=disabled
+meson configure builddir -Dlapack=disabled
 
 # View current configuration
 meson configure builddir
@@ -169,7 +176,6 @@ meson test -C builddir --suite check
 - **readline**: Homebrew's readline is keg-only (not symlinked into `/opt/homebrew`). The build system falls back to `cc.find_library` to detect it.
 - **CoCoA**: The build uses pkg-config only to avoid confusing the CoCoA math library with macOS's Cocoa.framework.
 - **JNI**: If `giac_wrap.cxx` is out of sync with the current API, the JNI build is automatically skipped with a warning. Regenerate with `swig -c++ -java -package javagiac giac.i` if needed.
-- **Tests**: Two tests (`cas`, `geo`) may fail on macOS due to platform-specific internal display attribute values. This is expected.
 
 ### Windows (MinGW / MSYS2)
 
@@ -281,21 +287,6 @@ Ensure development packages are installed. On some systems, pkg-config may not f
 ```bash
 # Set pkg-config path explicitly
 PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig meson setup builddir
-```
-
-### FLTK not found for GUI build
-
-Install FLTK development packages:
-
-```bash
-# Debian/Ubuntu
-sudo apt install libfltk1.3-dev
-
-# macOS
-brew install fltk
-
-# Fedora
-sudo dnf install fltk-devel
 ```
 
 ### LAPACK / BLAS link errors
