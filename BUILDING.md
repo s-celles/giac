@@ -26,6 +26,8 @@ Or using the justfile:
 just setup
 just build
 just test
+just icas          # launch the interactive CAS shell
+just aide          # launch the help tool
 ```
 
 ## Installing Prerequisites
