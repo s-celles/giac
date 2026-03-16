@@ -204,8 +204,24 @@ else
   lapack_dep = dependency('', required: false)
 endif
 
-# ECM
-ecm_dep = dependency('ecm', required: get_option('ecm'))
+# ECM (GMP-ECM factoring library)
+# Try system first, then fall back to subproject via ecm.wrap
+ecm_dep = dependency('ecm', required: false)
+if not ecm_dep.found() and not get_option('ecm').disabled()
+  # No pkg-config; try manual detection
+  _ecm_lib = cc.find_library('ecm', required: false,
+    dirs: ['/opt/homebrew/lib', '/usr/local/lib'])
+  if _ecm_lib.found() and cc.has_header('ecm.h',
+      args: ['-I/opt/homebrew/include', '-I/usr/local/include'])
+    ecm_dep = declare_dependency(
+      dependencies: _ecm_lib,
+      compile_args: ['-I/opt/homebrew/include'],
+    )
+  elif get_option('ecm').enabled()
+    # Force subproject build
+    ecm_dep = dependency('ecm', fallback: ['ecm', 'ecm_dep'], required: true)
+  endif
+endif
 if ecm_dep.found()
   cdata.set('HAVE_LIBECM', 1)
   optional_deps += ecm_dep

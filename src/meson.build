@@ -202,7 +202,7 @@ if build_jni
     name: 'giac_wrap.cxx API compatibility',
     include_directories: [giac_inc, config_inc],
     args: giac_common_args,
-    dependencies: giac_deps,
+    dependencies: [mpfr_dep, gmp_dep],
   )
   # Also check the wrapper itself compiles (quick syntax check of a known symbol)
   _wrap_file_ok = run_command('grep', '-q', 'printcharptr', files('giac_wrap.cxx'),
