@@ -3883,8 +3883,22 @@ namespace giac {
       CERR << "Pollard begin " << CLOCK() << '\n';
     bool do_pollard=true;
     gen a=ifactor2(n,v,do_pollard,contextptr);
-    if (a==-1)
+    if (a==-1){
+      // MPQS failed — try ECM as fallback
+      gen b=_ecm_factor(n,contextptr);
+      if (!is_undef(b) && is_strictly_greater(b,1,contextptr) && is_strictly_greater(n,b,contextptr)){
+	// ECM found a factor, recurse on both parts
+	gen q=n/b;
+	gen tmp;
+	tmp=b; v=mergevecteur(v,facprem(tmp,contextptr));
+	if (v.size() && is_undef(v.back())) return v;
+	tmp=q; v=mergevecteur(v,facprem(tmp,contextptr));
+	if (v.size() && is_undef(v.back())) return v;
+	n=1;
+	return v;
+      }
       return makevecteur(gensizeerr(gettext("Quadratic sieve failure, perhaps number too large")));
+    }
     if (is_zero(a))
       return makevecteur(gensizeerr(gettext("Stopped by user interruption")));
     n=1;
