@@ -122,7 +122,7 @@ elif host_machine.system() == 'windows'
     '-DGIAC_MPQS', '-D__MINGW_H', '-DMINGW32',
     '-DYY_NO_UNISTD_H',
     '-DHAVE_NO_SYS_TIMES_H', '-DHAVE_NO_SYS_RESOURCE_WAIT_H',
-    '-DHAVE_NO_PWD_H', '-DHAVE_NO_CWD',
+    '-DHAVE_NO_PWD_H', '-DHAVE_NO_CWD', '-DHAVE_NO_HOME_DIRECTORY',
   ]
 
 elif host_machine.system() == 'freebsd'
