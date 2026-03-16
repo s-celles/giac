@@ -58,6 +58,7 @@ jobs:
             mingw-w64-x86_64-mpfr
             mingw-w64-x86_64-libpng
             mingw-w64-x86_64-curl
+            mingw-w64-x86_64-gettext-runtime
 
       # ── Configure ──────────────────────────────────────────────────────
       - name: Configure (Linux/macOS)
