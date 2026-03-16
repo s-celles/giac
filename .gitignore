@@ -83,8 +83,8 @@
 !examples/**
 !icons/
 !icons/**
-!micropython-1.12/
-!micropython-1.12/**
+!micropython
+!.gitmodules
 !po/
 !po/**
 !cross/

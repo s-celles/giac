@@ -25,7 +25,7 @@ export LDFLAGS='-arch x86_64 -L/usr/local/lib -L/usr/local/Cellar/fltk/1.3.9/lib
 arch -x86_64 ./configure --prefix=/Applications/usr/x86_64 --disable-gettext --host=x86_64-apple-darwin
 #/bin/cp config.h.osx config.h
 #/bin/cp config.h.osx src/config.h
-cd micropython-1.12/xcas
+cd micropython/xcas
 make clean
 make -j4
 cd ../..

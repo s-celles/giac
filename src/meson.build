@@ -410,7 +410,11 @@ endif
 micropython_enabled = false
 
 if get_option('micropython').enabled()
-  micropython_dir = meson.current_source_dir() / '..' / 'micropython-1.12'
+  micropython_dir = meson.current_source_dir() / '..' / 'micropython'
+  fs = import('fs')
+  if not fs.is_dir(micropython_dir / 'py')
+    error('MicroPython submodule not initialized. Run: git submodule update --init')
+  endif
   make_prog = find_program('make', required: true)
 
   micropython_lib = custom_target('micropython',
@@ -424,7 +428,7 @@ if get_option('micropython').enabled()
 
   micropython_dep = declare_dependency(
     sources: micropython_lib,
-    include_directories: include_directories('..' / 'micropython-1.12'),
+    include_directories: include_directories('..' / 'micropython'),
   )
 
   micropython_enabled = true

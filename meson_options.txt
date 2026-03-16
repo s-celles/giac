@@ -22,7 +22,7 @@ option('gc',           type: 'feature', value: 'disabled', description: 'Boehm g
 option('dl',           type: 'feature', value: 'auto', description: 'Dynamic loading (libdl)')
 
 # Embedded engines
-option('micropython',  type: 'feature', value: 'disabled', description: 'Embedded MicroPython 1.12 interpreter')
+option('micropython',  type: 'feature', value: 'disabled', description: 'Embedded MicroPython interpreter')
 option('quickjs',      type: 'feature', value: 'auto', description: 'Embedded QuickJS JavaScript engine')
 option('libbf',        type: 'feature', value: 'auto', description: 'libbf arbitrary precision (bundled with QuickJS)')
 
