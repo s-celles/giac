@@ -156,21 +156,29 @@ meson configure builddir -Dlapack=disabled
 meson configure builddir
 ```
 
-### GMP-ECM (Recommended)
+### Recommended Build
 
-The ECM option (`-Decm=enabled`) enables the [GMP-ECM](https://gitlab.inria.fr/zimmerma/ecm) library for factoring large integers using the Elliptic Curve Method. This is **strongly recommended** — without it, `ifactor()` will fail on numbers above ~50 digits.
-
-When ECM is enabled and no system libecm is found, GMP-ECM 7.0.6 is automatically downloaded and built as a Meson subproject. No manual installation is required.
+For best results, build in **release mode** with optional math libraries:
 
 ```bash
-# Build with ECM (auto-downloads GMP-ECM if not installed)
-just setup -Decm=enabled
+just setup --buildtype=release
 just build
 
-# Test it
+# Test large integer factoring (~1.2s)
 just icas
 0>> ifactor(632459103267572196107100983820469021721602147490918660274601)
 650655447295098801102272374367*972033825117160941379425504503
+```
+
+> **Note**: Always use `--buildtype=release` for production builds. Debug mode (`-O0`) is 10-20x slower for computation-heavy operations like factoring.
+
+### GMP-ECM (Optional)
+
+The ECM option (`-Decm=enabled`) enables the [GMP-ECM](https://gitlab.inria.fr/zimmerma/ecm) library as a fallback for factoring very large integers (>60 digits) when the built-in MPQS sieve is insufficient. When enabled and no system libecm is found, GMP-ECM 7.0.6 is automatically downloaded and built as a Meson subproject.
+
+```bash
+just setup --buildtype=release -Decm=enabled
+just build
 ```
 
 ### PARI (Optional)
@@ -179,7 +187,7 @@ The PARI library provides additional number theory functions. On macOS with Home
 
 ```bash
 brew install pari  # macOS
-just setup -Dpari=enabled -Decm=enabled
+just setup --buildtype=release -Dpari=enabled
 just build
 ```
 
@@ -323,15 +331,14 @@ PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig meson setup builddir
 
 ### ifactor fails on large numbers ("Quadratic sieve failure")
 
-If `ifactor()` fails with "Quadratic sieve failure, perhaps number too large" on numbers above ~50 digits, you need GMP-ECM enabled:
+If `ifactor()` fails with "Quadratic sieve failure, perhaps number too large", ensure you are building in **release mode** (`--buildtype=release`). Debug builds are significantly slower and may time out on large numbers.
+
+If the issue persists on numbers above ~60 digits, enable GMP-ECM as a fallback:
 
 ```bash
-# Reconfigure with ECM
 meson configure builddir -Decm=enabled
 meson compile -C builddir
 ```
-
-GMP-ECM is downloaded and built automatically as a subproject. If you already have libecm installed system-wide, the build will use that instead.
 
 ### LAPACK / BLAS link errors
 
