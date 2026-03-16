@@ -67,11 +67,11 @@ The Meson build produces the following targets:
 | Target | Type | Description | Condition |
 |--------|------|-------------|-----------|
 | libgiac | static + shared | Core CAS library | Always |
+| icas | executable | Interactive CLI shell | Always (enhanced with FLTK if available) |
+| aide | executable | Help tool | Always |
+| hevea2mml | executable | LaTeX to MathML | Always |
 | libxcas | shared | FLTK GUI library | `-Dgui=enabled` + FLTK |
 | xcas | executable | Graphical CAS | `-Dgui=enabled` + FLTK |
-| icas | executable | Interactive CLI shell | `-Dgui=enabled` + FLTK |
-| aide | executable | Help tool | `-Dgui=enabled` + FLTK |
-| hevea2mml | executable | LaTeX to MathML | Always |
 | libjavagiac | shared | JNI bindings for Java | `-Djni=enabled` + JDK headers |
 
 ## Build Options

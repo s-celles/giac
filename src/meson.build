@@ -218,20 +218,20 @@ if build_gui
     install: true,
   )
 
-  # icas CLI shell (directly uses readline)
-  icas_deps = [libgiac_dep, libxcas_dep]
+  # icas CLI shell with GUI support (links libxcas for graph output etc.)
+  icas_gui_deps = [libgiac_dep, libxcas_dep]
   if readline_dep.found()
-    icas_deps += readline_dep
+    icas_gui_deps += readline_dep
   endif
   executable('icas',
     files('icas.cc'),
-    dependencies: icas_deps,
+    dependencies: icas_gui_deps,
     c_args: gui_args,
     cpp_args: gui_args,
     install: true,
   )
 
-  # aide help tool
+  # aide help tool with GUI support
   executable('aide',
     files('aide.cc'),
     dependencies: [libgiac_dep, libxcas_dep],
@@ -239,45 +239,64 @@ if build_gui
     cpp_args: gui_args,
     install: true,
   )
+else
+  # ── icas and aide without GUI (no FLTK, no libxcas) ───────────────────────
+  icas_deps = [libgiac_dep]
+  if readline_dep.found()
+    icas_deps += readline_dep
+  endif
+  executable('icas',
+    files('icas.cc'),
+    dependencies: icas_deps,
+    c_args: giac_common_args,
+    cpp_args: giac_common_args,
+    install: true,
+  )
+
+  executable('aide',
+    files('aide.cc'),
+    dependencies: [libgiac_dep],
+    c_args: giac_common_args,
+    cpp_args: giac_common_args,
+    install: true,
+  )
 endif
 
-# ── Test suite (requires icas from GUI build) ────────────────────────────────
+# ── Test suite (runs whenever icas is available) ──────────────────────────────
 
-if build_gui
-  check_dir = meson.current_source_dir() / '..' / 'check'
+check_dir = meson.current_source_dir() / '..' / 'check'
 
-  # Script-based tests that run icas with .cas input and diff against .out
-  check_tests = {
-    'factor': 'testfactor',
-    'normalize': 'testnormalize',
-    'partfrac': 'testpartfrac',
-    'limit': 'testlimit',
-    'cas': 'testcas',
-    'geo': 'testgeo',
-  }
+# Script-based tests that run icas with .cas input and diff against .out
+check_tests = {
+  'factor': 'testfactor',
+  'normalize': 'testnormalize',
+  'partfrac': 'testpartfrac',
+  'limit': 'testlimit',
+  'cas': 'testcas',
+  'geo': 'testgeo',
+}
 
-  icas_exe = meson.current_build_dir() / 'icas'
+icas_exe = meson.current_build_dir() / 'icas'
 
-  foreach name, input : check_tests
-    # Create a wrapper test file that resets python_compat(0) to ensure
-    # ^ notation (not **) regardless of user config or runtime defaults,
-    # then strip its extra output line with tail.
-    test(name,
-      find_program('sh'),
-      args: ['-c',
-        'printf "python_compat(0):;\\n" > ' + name + '.in && ' +
-        'cat ' + check_dir / input + ' >> ' + name + '.in && ' +
-        icas_exe + ' ' + name + '.in > ' + name + '.raw && ' +
-        'tail -n +2 ' + name + '.raw > ' + name + '.tst && ' +
-        'diff ' + name + '.tst ' + check_dir / name + '.out',
-      ],
-      workdir: meson.current_build_dir(),
-      timeout: 120,
-      suite: 'check',
-      env: {'HOME': meson.current_build_dir()},
-    )
-  endforeach
-endif
+foreach name, input : check_tests
+  # Create a wrapper test file that resets python_compat(0) to ensure
+  # ^ notation (not **) regardless of user config or runtime defaults,
+  # then strip its extra output line with tail.
+  test(name,
+    find_program('sh'),
+    args: ['-c',
+      'printf "python_compat(0):;\\n" > ' + name + '.in && ' +
+      'cat ' + check_dir / input + ' >> ' + name + '.in && ' +
+      icas_exe + ' ' + name + '.in > ' + name + '.raw && ' +
+      'tail -n +2 ' + name + '.raw > ' + name + '.tst && ' +
+      'diff ' + name + '.tst ' + check_dir / name + '.out',
+    ],
+    workdir: meson.current_build_dir(),
+    timeout: 120,
+    suite: 'check',
+    env: {'HOME': meson.current_build_dir()},
+  )
+endforeach
 
 # ── GUI summary ──────────────────────────────────────────────────────────────
 

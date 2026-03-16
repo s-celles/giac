@@ -188,6 +188,21 @@ static int texmacs_counter= 0;
 using namespace giac;
 #define STDIN_FILENO 0
 
+namespace xcas {
+  // Fallback icas_eval when FLTK/libxcas is not available.
+  // Provides basic evaluation without GUI features (graph display, debug windows).
+  void icas_eval(giac::gen & g, giac::gen & gg, int & reading_file,
+                 std::string & filename, giac::context * contextptr) {
+    reading_file = 0;
+    try {
+      gg = giac::eval(g, 1, contextptr);
+    } catch (std::runtime_error & err) {
+      giac::last_evaled_argptr(contextptr) = NULL;
+      gg = giac::string2gen(err.what(), false);
+    }
+  }
+}
+
 #else
 
 #include "Cfg.h"

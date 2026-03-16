@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, '**/meson*']
+    branches: [main, '**meson*', '**decouple*']
   pull_request:
     branches: [main]
 
@@ -15,6 +15,9 @@ jobs:
           - os: ubuntu-24.04
             name: Linux
             gui: true
+          - os: ubuntu-24.04
+            name: Linux (no GUI)
+            gui: false
           - os: macos-latest
             name: macOS
             gui: true
@@ -61,9 +64,13 @@ jobs:
             mingw-w64-x86_64-gettext-runtime
 
       # ── Configure ──────────────────────────────────────────────────────
-      - name: Configure (Linux/macOS)
-        if: runner.os != 'Windows'
+      - name: Configure (Linux/macOS with GUI)
+        if: runner.os != 'Windows' && matrix.gui
         run: meson setup builddir
+
+      - name: Configure (Linux/macOS without GUI)
+        if: runner.os != 'Windows' && !matrix.gui
+        run: meson setup builddir -Dgui=disabled
 
       - name: Configure (Windows)
         if: runner.os == 'Windows'
@@ -90,9 +97,15 @@ jobs:
         shell: msys2 {0}
         run: meson test -C builddir --suite unit
 
-      # ── Integration tests (requires GUI / icas) ────────────────────────
-      - name: Integration tests
-        if: matrix.gui
+      # ── Integration tests (icas is always built now) ────────────────────
+      - name: Integration tests (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: meson test -C builddir --suite check
+        continue-on-error: true
+
+      - name: Integration tests (Windows)
+        if: runner.os == 'Windows'
+        shell: msys2 {0}
         run: meson test -C builddir --suite check
         continue-on-error: true
 
