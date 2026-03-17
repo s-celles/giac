@@ -2379,7 +2379,15 @@ int main(int ARGC, char *ARGV[]){
 #else
       start=clock();
 #endif
-      xcas::icas_eval(gq,ge,reading_file,filename,contextptr);
+      // Use simple eval instead of xcas::icas_eval (which uses threads + Fl::wait
+      // that may not work correctly with FLTK 1.4 on macOS)
+      reading_file=0;
+      try {
+	ge=giac::eval(gq,eval_level(contextptr),contextptr);
+      } catch (std::runtime_error & err) {
+	giac::last_evaled_argptr(contextptr)=NULL;
+	ge=giac::string2gen(err.what(),false);
+      }
 #ifdef __APPLE_
       startc=clock()-startc;
 #endif
@@ -2391,10 +2399,13 @@ int main(int ARGC, char *ARGV[]){
       giac::history_in(contextptr).push_back(gq);
       giac::history_out(contextptr).push_back(ge);
       // 2-d plot?
-      int graph_output=graph_output_type(ge);
-      if (reading_file>=2 || graph_output || (giac::ckmatrix(ge,true) &&ge.subtype==giac::_SPREAD__VECT) ){
+      giac::gen ge_copy(ge); // copy before fltk_view modifies ge via event loop
+      int graph_output=graph_output_type(ge_copy);
+      if (graph_output)
+	cerr << "plot detected: type=" << graph_output << " ge_copy.is_symb=" << ge_copy.is_symb_of_sommet(giac::at_pnt) << '\n';
+      if (reading_file>=2 || graph_output || (giac::ckmatrix(ge_copy,true) &&ge_copy.subtype==giac::_SPREAD__VECT) ){
 #ifdef HAVE_LIBFLTK
-	if (xcas::fltk_view(gq,ge,"",filename,reading_file,contextptr))
+	if (xcas::fltk_view(gq,ge_copy,"",filename,graph_output?graph_output:reading_file,contextptr))
 	  cout << "Done";
 	else
 #endif

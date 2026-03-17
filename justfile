@@ -66,6 +66,13 @@ build-with-gui *ARGS:
     rm -rf {{builddir}}
     meson setup {{builddir}} --buildtype=release {{ARGS}}
     meson compile -C {{builddir}}
+    # Fix: on macOS, patch icas/aide to use installed libgiac (same copy as libxcas)
+    # to avoid symbol address mismatch between two loaded copies of libgiac
+    if [ "$(uname)" = "Darwin" ]; then
+        echo "Patching rpath for macOS..."
+        install_name_tool -change @rpath/libgiac.0.dylib /opt/homebrew/lib/libgiac.0.dylib {{builddir}}/src/icas
+        install_name_tool -change @rpath/libgiac.0.dylib /opt/homebrew/lib/libgiac.0.dylib {{builddir}}/src/aide
+    fi
     echo ""
     echo "=== Done! icas now has FLTK graph output support ==="
     echo "Run: just icas"

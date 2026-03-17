@@ -164,12 +164,24 @@ if build_gui
     gui_deps += readline_dep
   endif
 
+  # When linking icas/aide against both libgiac (builddir) and libxcas (installed),
+  # macOS may load two copies of libgiac (one via @rpath from builddir, one via
+  # absolute path from libxcas). This causes at_* symbol address mismatches.
+  # Fix: use install_rpath so the installed icas resolves libgiac from the same
+  # prefix as libxcas, and set build_rpath to the install libdir for dev builds.
+  _gui_install_rpath = ''
+  if host_machine.system() == 'darwin'
+    _gui_install_rpath = '/opt/homebrew/lib'
+  endif
+
   executable('icas',
     files('icas.cc'),
     dependencies: gui_deps,
     c_args: gui_args,
     cpp_args: gui_args,
     install: true,
+    install_rpath: _gui_install_rpath,
+    build_rpath: _gui_install_rpath,
   )
 
   executable('aide',
@@ -178,6 +190,8 @@ if build_gui
     c_args: gui_args,
     cpp_args: gui_args,
     install: true,
+    install_rpath: _gui_install_rpath,
+    build_rpath: _gui_install_rpath,
   )
 else
   # CLI-only icas and aide (no FLTK, no libxcas)
