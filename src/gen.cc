@@ -10132,12 +10132,21 @@ namespace giac {
     return a.symb_size() < b.symb_size();
   }
 
+  static inline bool same_sommet(const unary_function_ptr & a, const unary_function_ptr & b) {
+    if (a==b) return true;
+    // Fallback: compare by name (needed when libgiac and libxcas are separate
+    // shared libraries with duplicate static at_* symbols)
+    if (a.ptr() && b.ptr() && a.ptr()->s && b.ptr()->s)
+      return !strcmp(a.ptr()->s, b.ptr()->s);
+    return false;
+  }
+
   bool gen::is_symb_of_sommet(const unary_function_ptr & u) const {
-    return type==_SYMB && _SYMBptr->sommet==u;
+    return type==_SYMB && same_sommet(_SYMBptr->sommet, u);
   }
 
   bool gen::is_symb_of_sommet(const unary_function_ptr * u) const {
-    return type==_SYMB && _SYMBptr->sommet==u;
+    return type==_SYMB && u && same_sommet(_SYMBptr->sommet, *u);
   }
 
   gen operator && (const gen & a,const gen & b){
