@@ -1,20 +1,54 @@
-This package was debianized by Carleos Artime <carleos@pinon.ccu.uniovi.es> on
-Fri, 26 Jul 2002 20:01:40 0200
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: giac
+Upstream-Contact: Bernard Parisse <bernard.parisse@univ-grenoble-alpes.fr>
+Source: https://www-fourier.ujf-grenoble.fr/~parisse/giac.html
 
-It was downloaded from ftp://ftp-fourier.ujf-grenoble.fr/xcas/giac.tgz
+Files: *
+Copyright: 2002-2026 B. Parisse, Institut Fourier
+           2002-2026 R. De Graeve
+License: GPL-3.0+
 
-Upstream Author(s): Bernard Parisse <parisse@fourier.ujf-grenoble.fr>
+Files: src/quickjs.c src/quickjs-libc.c src/quickjs.h src/quickjs-libc.h
+       src/quickjs-atom.h src/quickjs-opcode.h
+Copyright: 2017-2020 Fabrice Bellard, Charlie Gordon
+License: MIT
 
-Copyright:
+Files: src/libbf.c src/libbf.h src/libregexp.c src/libregexp.h
+       src/libunicode.c src/libunicode.h
+Copyright: 2017-2020 Fabrice Bellard
+License: MIT
 
-(c) B. Parisse, Institut Fourier, 2002
-    R. De Graeve, Institut Fourier, 2002
-    except for:
-    a/ The first GNUification of the giac package (automake,autoconf) is
-    (c) Richard Kreckel, Universitat Mainz, 10/2000.
-    b/ The expression parser was modified from GiNaC expression parser
-    GiNaC Copyright (C) 1999-2000 Johannes Gutenberg University Mainz, Germany
-    
-You are free to distribute this software under the terms of the GNU General
-Public License. On Debian systems, the complete text of the GNU General Public
-License can be found in /usr/share/common-licenses/GPL file.
+Files: src/tinymt32.c src/tinymt32.h
+Copyright: 2011 Mutsuo Saito, Makoto Matsumoto, Hiroshima University, The University of Tokyo
+License: BSD-3-Clause
+
+Files: debian/*
+Copyright: 2002 Carleos Artime <carleos@pinon.ccu.uniovi.es>
+License: GPL-3.0+
+
+License: GPL-3.0+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ .
+ On Debian systems, the complete text of the GNU General Public
+ License version 3 can be found in "/usr/share/common-licenses/GPL-3".
+
+License: MIT
+ Permission is hereby granted, free of charge, to any person obtaining a copy
+ of this software and associated documentation files (the "Software"), to deal
+ in the Software without restriction, including without limitation the rights
+ to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ copies of the Software.
+ .
+ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+
+License: BSD-3-Clause
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are met:
+ .
+ 1. Redistributions of source code must retain the above copyright notice.
+ 2. Redistributions in binary form must reproduce the above copyright notice.
+ 3. Neither the name of the copyright holder nor the names of its contributors
+    may be used to endorse or promote products.
