@@ -2402,7 +2402,6 @@ int main(int ARGC, char *ARGV[]){
       giac::gen ge_copy(ge); // copy before fltk_view modifies ge via event loop
       int graph_output=graph_output_type(ge_copy);
       if (graph_output)
-	cerr << "plot detected: type=" << graph_output << " ge_copy.is_symb=" << ge_copy.is_symb_of_sommet(giac::at_pnt) << '\n';
       if (reading_file>=2 || graph_output || (giac::ckmatrix(ge_copy,true) &&ge_copy.subtype==giac::_SPREAD__VECT) ){
 #ifdef HAVE_LIBFLTK
 	if (xcas::fltk_view(gq,ge_copy,"",filename,graph_output?graph_output:reading_file,contextptr))
