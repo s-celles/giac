@@ -216,33 +216,38 @@ endif
 
 check_dir = meson.current_source_dir() / '..' / 'check'
 
-# Script-based tests that run icas with .cas input and diff against .out
+# Script-based tests that run icas with .cas/.txt input and diff against .out
+# Format: 'test_name': 'input_file' (relative to check/)
 check_tests = {
+  # Core algebra
   'factor': 'testfactor',
   'normalize': 'testnormalize',
   'partfrac': 'testpartfrac',
   'limit': 'testlimit',
   'cas': 'testcas',
   'geo': 'testgeo',
+  # Integration
+  'integrate': 'testintegrate',
 }
 
 icas_exe = meson.current_build_dir() / 'icas'
 
 foreach name, input : check_tests
-  # Create a wrapper test file that resets python_compat(0) to ensure
-  # ^ notation (not **) regardless of user config or runtime defaults,
-  # then strip its extra output line with tail.
+  # Run icas with test input, filter timing/debug lines, diff against reference.
+  # python_compat(0) ensures ^ notation (not **) regardless of user config.
   test(name,
     find_program('sh'),
     args: ['-c',
       'printf "python_compat(0):;\\n" > ' + name + '.in && ' +
       'cat ' + check_dir / input + ' >> ' + name + '.in && ' +
-      icas_exe + ' ' + name + '.in > ' + name + '.raw && ' +
-      'tail -n +2 ' + name + '.raw > ' + name + '.tst && ' +
+      icas_exe + ' ' + name + '.in 2>/dev/null | ' +
+      'tail -n +2 | ' +
+      'grep -v "^// " | grep -v "^Added " | grep -v "^$" ' +
+      '> ' + name + '.tst && ' +
       'diff ' + name + '.tst ' + check_dir / name + '.out',
     ],
     workdir: meson.current_build_dir(),
-    timeout: 120,
+    timeout: name.startswith('int') ? 600 : 120,
     suite: 'check',
     env: {'HOME': meson.current_build_dir()},
   )
