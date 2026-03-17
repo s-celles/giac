@@ -172,6 +172,41 @@ just icas
 
 > **Note**: Always use `--buildtype=release` for production builds. Debug mode (`-O0`) is 10-20x slower for computation-heavy operations like factoring.
 
+### GUI Support (Optional — FLTK graph output in icas)
+
+The `build-with-gui` recipe builds icas with FLTK graph output support. This requires the [xcas](https://github.com/s-celles/xcas) repository cloned alongside giac:
+
+```
+parent/
+├── giac/    # this repo
+└── xcas/    # git clone https://github.com/s-celles/xcas
+```
+
+```bash
+just build-with-gui
+just icas
+0>> plot(sin(x))    # opens FLTK window with graph
+```
+
+The recipe automates a three-pass build:
+1. Build and install libgiac (without GUI)
+2. Build and install xcas/libxcas (depends on libgiac)
+3. Rebuild icas with GUI (links libxcas for graph output)
+
+#### Supported graph commands
+
+| Command | Status |
+|---------|--------|
+| `plot(sin(x))` | OK |
+| `plot([sin(x),cos(x)])` | OK |
+| `plot(x^2-1,x=-3..3)` | OK |
+| `plotpolar(cos(3*t),t)` | OK |
+| `plot3d(x^2+y^2,[x=-2..2,y=-2..2])` | OK |
+| `plotimplicit(x^2+y^2-1,x,y)` | OK |
+| `plotfield(sin(x*y),[x=-3..3,y=-3..3])` | OK |
+| `plotparam(cos(t)+i*sin(2*t),t=0..2*pi)` | OK |
+| `turtle_forward`, `turtle_left`, etc. | Not supported (turtle commands require xcas GUI) |
+
 ### GMP-ECM (Optional)
 
 The ECM option (`-Decm=enabled`) enables the [GMP-ECM](https://gitlab.inria.fr/zimmerma/ecm) library as a fallback for factoring very large integers (>60 digits) when the built-in MPQS sieve is insufficient. When enabled and no system libecm is found, GMP-ECM 7.0.6 is automatically downloaded and built as a Meson subproject.
