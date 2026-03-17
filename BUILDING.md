@@ -191,6 +191,79 @@ just setup --buildtype=release -Dpari=enabled
 just build
 ```
 
+## Debian / Ubuntu Packaging
+
+The `debian/` directory contains packaging files for building `.deb` packages. The packaging uses debhelper with the Meson build system.
+
+### Prerequisites
+
+```bash
+sudo apt install debhelper meson ninja-build \
+  libgmp-dev libmpfr-dev libreadline-dev libpng-dev libcurl4-openssl-dev
+```
+
+### Building the Package
+
+```bash
+# From the repository root
+dpkg-buildpackage -us -uc
+
+# Or using the justfile
+just debian
+```
+
+This produces `.deb` files in the parent directory (`../`):
+
+```
+../giac_2.0.0-21_amd64.deb
+../giac_2.0.0-21.dsc
+../giac_2.0.0-21_amd64.changes
+```
+
+### Installing the Package
+
+```bash
+sudo dpkg -i ../giac_2.0.0-21_amd64.deb
+# Fix any missing dependencies
+sudo apt --fix-broken install
+```
+
+### Publishing to a PPA (Ubuntu)
+
+To publish to a Personal Package Archive (PPA) on Launchpad:
+
+1. **Create a PPA** at https://launchpad.net/~/+activate-ppa
+
+2. **Set up GPG key** (one-time):
+   ```bash
+   gpg --gen-key
+   gpg --send-keys --keyserver keyserver.ubuntu.com <KEY_ID>
+   ```
+
+3. **Build a signed source package**:
+   ```bash
+   debuild -S -sa
+   ```
+
+4. **Upload to PPA**:
+   ```bash
+   dput ppa:<your-username>/<ppa-name> ../giac_2.0.0-21_source.changes
+   ```
+
+### Publishing to Debian (Official)
+
+To submit to the official Debian archive:
+
+1. **File an ITP** (Intent To Package) bug at https://bugs.debian.org
+2. **Find a sponsor** on https://mentors.debian.net
+3. **Upload signed source package** to mentors.debian.net:
+   ```bash
+   dput mentors ../giac_2.0.0-21_source.changes
+   ```
+4. A Debian Developer reviews and uploads to the archive
+
+See the [Debian New Maintainers' Guide](https://www.debian.org/doc/manuals/maint-guide/) for the full process.
+
 ## Native Builds
 
 ### Linux (glibc / musl)
