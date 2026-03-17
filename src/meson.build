@@ -35,7 +35,7 @@ giac_core_sources = files(
   'isom.cc', 'plot.cc', 'plot3d.cc', 'rpn.cc',
   'prog.cc', 'pari.cc', 'cocoa.cc', 'unary.cc',
   'usual.cc', 'identificateur.cc', 'gen.cc', 'tinymt32.cc',
-  'first.cc', 'TmpLESystemSolver.C', 'TmpFGLM.C', 'help.cc',
+  'first.cc', 'help.cc',
   'lpsolve.cc', 'optimization.cc', 'signalprocessing.cc',
   'graphe.cc', 'graphtheory.cc', 'nautywrapper.c',
   'markup.cc', 'kdisplay.cc', 'kadd.cc',
@@ -44,6 +44,11 @@ giac_core_sources = files(
 )
 
 giac_sources = [parser_cc, lexer_cc] + giac_core_sources
+
+# Conditional: CoCoA support files (use .C extension, only needed with CoCoA)
+if cocoa_dep.found()
+  giac_sources += files('TmpLESystemSolver.C', 'TmpFGLM.C')
+endif
 
 # Conditional: QuickJS sources
 quickjs_enabled = not get_option('quickjs').disabled()
