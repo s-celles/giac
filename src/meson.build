@@ -82,7 +82,7 @@ libgiac = both_libraries('giac',
 libgiac_dep = declare_dependency(
   link_with: libgiac,
   include_directories: [giac_inc, config_inc],
-  dependencies: [mpfr_dep, gmp_dep],
+  dependencies: [mpfr_dep, gmp_dep] + optional_deps,
 )
 
 # ── hevea2mml (standalone, no libgiac dependency) ────────────────────────────
