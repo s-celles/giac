@@ -407,4 +407,4 @@ Then reconfigure: `meson setup builddir --reconfigure`
 
 ### C++ standard errors
 
-The build requires C++14 minimum. If you see errors about `std::chrono` literals or `operator""s`, ensure your compiler supports C++14 (GCC >= 5, Clang >= 3.4).
+The build requires C++17 minimum. If you see errors about `std::chrono` literals or `operator""s`, ensure your compiler supports C++17 (GCC >= 7, Clang >= 5, Apple Clang >= 10, MSVC >= 19.14).

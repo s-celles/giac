@@ -3,7 +3,7 @@ project('giac', 'c', 'cpp',
   meson_version: '>= 1.2.0',
   license: 'GPL-3.0-or-later',
   default_options: [
-    'cpp_std=c++14',
+    'cpp_std=c++17',
     'warning_level=1',
   ],
 )
