@@ -115,48 +115,8 @@ if not get_option('gui').disabled()
 
   # Try system FLTK via fltk-config
   fltk_dep = dependency('fltk', method: 'config-tool', required: false)
-
-  # On macOS, Homebrew's fltk@1.3 is keg-only — try its fltk-config explicitly
-  if not fltk_dep.found() and host_machine.system() == 'darwin'
-    foreach _fltk13_path : ['/opt/homebrew/opt/fltk@1.3/bin/fltk-config',
-                            '/usr/local/opt/fltk@1.3/bin/fltk-config']
-      _fltk13 = find_program(_fltk13_path, required: false)
-      if _fltk13.found()
-        _fltk_cflags = run_command(_fltk13, '--cflags', check: true).stdout().strip()
-        _fltk_ldflags = run_command(_fltk13, '--use-gl', '--use-images', '--ldflags',
-          check: true).stdout().strip()
-        _fltk_ver = run_command(_fltk13, '--version', check: true).stdout().strip()
-        _fltk_link_args = []
-        foreach _f : _fltk_ldflags.split()
-          if _f != '-lpng' and _f != '-ljpeg'
-            _fltk_link_args += _f
-          endif
-        endforeach
-        _fltk_img_deps = [
-          dependency('libpng', required: false),
-          dependency('libjpeg', required: false),
-        ]
-        fltk_dep = declare_dependency(
-          compile_args: _fltk_cflags.split(),
-          link_args: _fltk_link_args,
-          dependencies: _fltk_img_deps,
-          version: _fltk_ver,
-        )
-        break
-      endif
-    endforeach
-  endif
-
   if not fltk_dep.found()
     fltk_dep = dependency('fltk', required: get_option('gui'))
-  endif
-
-  if fltk_dep.found() and fltk_dep.version().version_compare('>= 1.4.0')
-    warning('FLTK ' + fltk_dep.version() + ' detected but giac GUI requires FLTK 1.3.x. ' +
-            'On macOS: brew install fltk@1.3')
-    if not get_option('gui').enabled()
-      fltk_dep = dependency('', required: false)
-    endif
   endif
 
   # Find xcas headers (installed to <prefix>/include/xcas/)
