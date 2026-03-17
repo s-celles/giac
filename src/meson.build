@@ -254,7 +254,7 @@ foreach name, input : check_tests
     workdir: meson.current_build_dir(),
     timeout: name.startswith('int') ? 600 : 120,
     suite: 'check',
-    env: {'HOME': meson.current_build_dir()},
+    env: {'HOME': meson.current_build_dir(), 'LANG': 'en_US.UTF-8'},
   )
 endforeach
 
