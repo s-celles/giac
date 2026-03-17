@@ -93,13 +93,11 @@ jobs:
       - name: Integration tests (Linux/macOS)
         if: runner.os != 'Windows'
         run: meson test -C builddir --suite check
-        continue-on-error: true
 
       - name: Integration tests (Windows)
         if: runner.os == 'Windows'
         shell: msys2 {0}
         run: meson test -C builddir --suite check
-        continue-on-error: true
 
       # ── Upload logs on failure ─────────────────────────────────────────
       - name: Upload test logs
