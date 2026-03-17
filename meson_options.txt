@@ -1,3 +1,6 @@
+# GUI support (optional, requires external libxcas + FLTK)
+option('gui',          type: 'feature', value: 'auto', description: 'Enable FLTK graph output in icas/aide (requires libxcas)')
+
 # Bindings
 option('jni',          type: 'feature', value: 'auto', description: 'Build libjavagiac JNI bindings')
 

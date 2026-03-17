@@ -93,38 +93,164 @@ executable('hevea2mml',
   install: true,
 )
 
-# ── icas and aide (CLI only, no GUI) ─────────────────────────────────────────
+# ── Optional GUI support for icas/aide (external libxcas + FLTK) ─────────────
 
-icas_deps = [libgiac_dep]
-if readline_dep.found()
-  icas_deps += readline_dep
-endif
-# On MSYS2/MinGW, printf/gettext redirect through libintl
-if host_machine.system() == 'windows'
-  _intl_dep = cc.find_library('intl', required: false)
-  if _intl_dep.found()
-    icas_deps += _intl_dep
+build_gui = false
+fltk_dep = dependency('', required: false)
+xcas_dep = dependency('', required: false)
+
+if not get_option('gui').disabled()
+  # Try to find external libxcas (installed from xcas repo)
+  xcas_dep = dependency('xcas', required: false)
+  if not xcas_dep.found()
+    _xcas_extra_dirs = []
+    if host_machine.system() == 'darwin'
+      _xcas_extra_dirs = ['/opt/homebrew/lib', '/usr/local/lib']
+    endif
+    _xcas_lib = cc.find_library('xcas', required: false, dirs: _xcas_extra_dirs)
+    if _xcas_lib.found()
+      xcas_dep = _xcas_lib
+    endif
+  endif
+
+  # Try system FLTK via fltk-config
+  fltk_dep = dependency('fltk', method: 'config-tool', required: false)
+
+  # On macOS, Homebrew's fltk@1.3 is keg-only — try its fltk-config explicitly
+  if not fltk_dep.found() and host_machine.system() == 'darwin'
+    foreach _fltk13_path : ['/opt/homebrew/opt/fltk@1.3/bin/fltk-config',
+                            '/usr/local/opt/fltk@1.3/bin/fltk-config']
+      _fltk13 = find_program(_fltk13_path, required: false)
+      if _fltk13.found()
+        _fltk_cflags = run_command(_fltk13, '--cflags', check: true).stdout().strip()
+        _fltk_ldflags = run_command(_fltk13, '--use-gl', '--use-images', '--ldflags',
+          check: true).stdout().strip()
+        _fltk_ver = run_command(_fltk13, '--version', check: true).stdout().strip()
+        _fltk_link_args = []
+        foreach _f : _fltk_ldflags.split()
+          if _f != '-lpng' and _f != '-ljpeg'
+            _fltk_link_args += _f
+          endif
+        endforeach
+        _fltk_img_deps = [
+          dependency('libpng', required: false),
+          dependency('libjpeg', required: false),
+        ]
+        fltk_dep = declare_dependency(
+          compile_args: _fltk_cflags.split(),
+          link_args: _fltk_link_args,
+          dependencies: _fltk_img_deps,
+          version: _fltk_ver,
+        )
+        break
+      endif
+    endforeach
+  endif
+
+  if not fltk_dep.found()
+    fltk_dep = dependency('fltk', required: get_option('gui'))
+  endif
+
+  if fltk_dep.found() and fltk_dep.version().version_compare('>= 1.4.0')
+    warning('FLTK ' + fltk_dep.version() + ' detected but giac GUI requires FLTK 1.3.x. ' +
+            'On macOS: brew install fltk@1.3')
+    if not get_option('gui').enabled()
+      fltk_dep = dependency('', required: false)
+    endif
+  endif
+
+  # Find xcas headers (installed to <prefix>/include/xcas/)
+  if xcas_dep.found() and xcas_dep.type_name() != 'pkgconfig'
+    # Manual detection — add include path for xcas headers
+    _xcas_inc_args = []
+    if host_machine.system() == 'darwin'
+      _xcas_inc_args = ['-I/opt/homebrew/include/xcas', '-I/usr/local/include/xcas']
+    else
+      _xcas_inc_args = ['-I/usr/include/xcas']
+    endif
+    xcas_dep = declare_dependency(
+      dependencies: xcas_dep,
+      compile_args: _xcas_inc_args,
+    )
+  endif
+
+  if fltk_dep.found() and xcas_dep.found()
+    build_gui = true
+  elif fltk_dep.found() and not xcas_dep.found()
+    warning('FLTK found but libxcas not found — icas will be built without GUI support. ' +
+            'Install xcas (https://github.com/s-celles/xcas) for graph output.')
   endif
 endif
-executable('icas',
-  files('icas.cc'),
-  dependencies: icas_deps,
-  c_args: giac_common_args,
-  cpp_args: giac_common_args,
-  install: true,
-)
 
-aide_deps = [libgiac_dep]
-if host_machine.system() == 'windows' and _intl_dep.found()
-  aide_deps += _intl_dep
+# ── icas and aide ─────────────────────────────────────────────────────────────
+
+if build_gui
+  gl_dep = dependency('gl', required: false)
+  x11_dep = dependency('x11', required: false)
+
+  gui_args = giac_common_args + ['-DHAVE_LIBFLTK']
+  if gl_dep.found()
+    gui_args += ['-DHAVE_LIBFLTK_GL']
+  endif
+
+  gui_deps = [libgiac_dep, xcas_dep, fltk_dep]
+  if gl_dep.found()
+    gui_deps += gl_dep
+  endif
+  if x11_dep.found()
+    gui_deps += x11_dep
+  endif
+  if readline_dep.found()
+    gui_deps += readline_dep
+  endif
+
+  executable('icas',
+    files('icas.cc'),
+    dependencies: gui_deps,
+    c_args: gui_args,
+    cpp_args: gui_args,
+    install: true,
+  )
+
+  executable('aide',
+    files('aide.cc'),
+    dependencies: [libgiac_dep, xcas_dep, fltk_dep],
+    c_args: gui_args,
+    cpp_args: gui_args,
+    install: true,
+  )
+else
+  # CLI-only icas and aide (no FLTK, no libxcas)
+  icas_deps = [libgiac_dep]
+  if readline_dep.found()
+    icas_deps += readline_dep
+  endif
+  if host_machine.system() == 'windows'
+    _intl_dep = cc.find_library('intl', required: false)
+    if _intl_dep.found()
+      icas_deps += _intl_dep
+    endif
+  endif
+  executable('icas',
+    files('icas.cc'),
+    dependencies: icas_deps,
+    c_args: giac_common_args,
+    cpp_args: giac_common_args,
+    install: true,
+  )
+
+  aide_deps = [libgiac_dep]
+  if host_machine.system() == 'windows' and _intl_dep.found()
+    aide_deps += _intl_dep
+  endif
+  executable('aide',
+    files('aide.cc'),
+    dependencies: aide_deps,
+    c_args: giac_common_args,
+    cpp_args: giac_common_args,
+    install: true,
+  )
 endif
-executable('aide',
-  files('aide.cc'),
-  dependencies: aide_deps,
-  c_args: giac_common_args,
-  cpp_args: giac_common_args,
-  install: true,
-)
 
 # ── Test suite (runs whenever icas is available) ──────────────────────────────
 
