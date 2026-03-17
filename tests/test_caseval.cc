@@ -2,6 +2,11 @@
 #include "config.h"
 #endif
 #include "gen.h"
+// On MinGW, libintl.h (pulled in via giacintl.h) redefines fprintf/printf
+// as macros (e.g. #define fprintf libintl_fprintf), which breaks std::fprintf.
+// Undefine them before including <cstdio> so the std:: qualified names work.
+#undef fprintf
+#undef printf
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
