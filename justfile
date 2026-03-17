@@ -3,6 +3,8 @@
 # Requires: https://github.com/casey/just
 
 builddir := "builddir"
+xcas_dir := "../xcas"
+xcas_builddir := "../xcas/builddir"
 
 # List available recipes
 default:
@@ -38,6 +40,35 @@ clean:
 
 # Full rebuild from scratch
 rebuild: clean setup build
+
+# Build with GUI support (two-pass: giac → xcas → giac+GUI)
+build-with-gui *ARGS:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    echo "=== Pass 1: Build and install libgiac (without GUI) ==="
+    rm -rf {{builddir}}
+    meson setup {{builddir}} --buildtype=release -Dgui=disabled {{ARGS}}
+    meson compile -C {{builddir}}
+    meson install -C {{builddir}}
+    echo ""
+    echo "=== Pass 2: Build and install xcas (libxcas + xcas executable) ==="
+    if [ ! -d "{{xcas_dir}}" ]; then
+        echo "Error: xcas repo not found at {{xcas_dir}}"
+        echo "Clone it: git clone https://github.com/s-celles/xcas {{xcas_dir}}"
+        exit 1
+    fi
+    rm -rf {{xcas_builddir}}
+    meson setup {{xcas_builddir}} {{xcas_dir}} --buildtype=release
+    meson compile -C {{xcas_builddir}}
+    meson install -C {{xcas_builddir}}
+    echo ""
+    echo "=== Pass 3: Rebuild giac with GUI support (links libxcas) ==="
+    rm -rf {{builddir}}
+    meson setup {{builddir}} --buildtype=release {{ARGS}}
+    meson compile -C {{builddir}}
+    echo ""
+    echo "=== Done! icas now has FLTK graph output support ==="
+    echo "Run: just icas"
 
 # Build Debian package
 debian:
