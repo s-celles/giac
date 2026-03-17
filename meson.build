@@ -146,6 +146,7 @@ elif host_machine.system() == 'windows'
     '-DYY_NO_UNISTD_H',
     '-DHAVE_NO_SYS_TIMES_H', '-DHAVE_NO_SYS_RESOURCE_WAIT_H',
     '-DHAVE_NO_PWD_H', '-DHAVE_NO_CWD', '-DHAVE_NO_HOME_DIRECTORY',
+    '-DWIN32_LEAN_AND_MEAN',  # Skip RPC headers to avoid std::byte / Windows byte conflict in C++17
   ]
 
 elif host_machine.system() == 'freebsd'
