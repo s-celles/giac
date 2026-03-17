@@ -15,6 +15,7 @@
 !CHANGELOG.md
 !COPYING
 !justfile
+!PACKAGING.md
 !meson.build
 !meson_options.txt
 !NEWS.md
