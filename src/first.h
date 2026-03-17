@@ -33,7 +33,15 @@
 #endif
   
 // register is deprecated in c++17
-#define register 
+#define register
+
+// On Windows with C++17, std::byte conflicts with the Windows byte typedef
+// when 'using namespace std;' is used. Rename the Windows byte before it is defined.
+#if defined(__MINGW32__) && __cplusplus >= 201703L
+#define byte win_byte_override
+#include <rpcndr.h>
+#undef byte
+#endif
 
 
 #ifdef _GLIBCXX_ASSERTIONS
