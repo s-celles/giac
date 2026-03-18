@@ -126,18 +126,23 @@ elif host_machine.system() == 'darwin'
   cdata.set('HAVE_LIBPTHREAD', 1)
   is_ios = false
   is_catalyst = false
-  if host_machine.subsystem() == 'ios'
-    is_ios = true
-    platform_args += ['-DAPPLE_SMART', '-DNO_GETTEXT', '-DNO_SCANDIR', '-D_IOS_FIX_']
-    cdata.set('HAVE_CONFIG_H', 1)
-  elif host_machine.subsystem() == 'macos'
-    # Could be Mac Catalyst or native macOS
-    is_catalyst = true
-    platform_args += ['-DAPPLE_SMART', '-DNO_GETTEXT', '-DNO_SCANDIR']
+  # host_machine.subsystem() requires Meson >= 1.5.0; guard with version check
+  if meson.version().version_compare('>= 1.5.0')
+    if host_machine.subsystem() == 'ios'
+      is_ios = true
+      platform_args += ['-DAPPLE_SMART', '-DNO_GETTEXT', '-DNO_SCANDIR', '-D_IOS_FIX_']
+      cdata.set('HAVE_CONFIG_H', 1)
+    elif host_machine.subsystem() == 'macos'
+      # Could be Mac Catalyst or native macOS
+      is_catalyst = true
+      platform_args += ['-DAPPLE_SMART', '-DNO_GETTEXT', '-DNO_SCANDIR']
+    else
+      # Native macOS desktop
+      platform_args += ['-DNO_SCANDIR']
+    endif
   else
-    # Native macOS desktop
+    # Meson < 1.5.0: assume native macOS desktop
     platform_args += ['-DNO_SCANDIR']
-    # NO_GETTEXT only if gettext not found (set later)
   endif
 
 elif host_machine.system() == 'windows'
@@ -147,6 +152,7 @@ elif host_machine.system() == 'windows'
     '-DHAVE_NO_SYS_TIMES_H', '-DHAVE_NO_SYS_RESOURCE_WAIT_H',
     '-DHAVE_NO_PWD_H', '-DHAVE_NO_CWD', '-DHAVE_NO_HOME_DIRECTORY',
     '-DWIN32_LEAN_AND_MEAN',  # Skip RPC headers to avoid std::byte / Windows byte conflict in C++17
+    '-Wa,-mbig-obj',  # PE/COFF object files can exceed 65535 sections with large C++ TUs
   ]
 
 elif host_machine.system() == 'freebsd'
