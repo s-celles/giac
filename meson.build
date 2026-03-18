@@ -26,6 +26,7 @@ if not mpfr_dep.found()
   mpfr_dep = dependency('mpfr', required: true)
 endif
 
+mpfr_dep_pkgconfig = mpfr_dep  # preserve for pkg.generate() which needs a pkgconfig dep
 if host_machine.system() == 'darwin'
   gmp_libdir = gmp_dep.get_variable(pkgconfig: 'libdir', default_value: '')
   if gmp_libdir != ''
@@ -482,5 +483,5 @@ pkg.generate(libgiac,
   name: 'giac',
   description: 'Giac Computer Algebra System library',
   url: 'https://www-fourier.ujf-grenoble.fr/~parisse/giac.html',
-  requires: [gmp_dep, mpfr_dep],
+  requires: [gmp_dep, mpfr_dep_pkgconfig],
 )
