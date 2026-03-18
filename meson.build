@@ -238,6 +238,10 @@ if not get_option('lapack').disabled()
   endif
 else
   lapack_dep = dependency('', required: false)
+  # On Apple, vecteur.cc auto-defines HAVE_LIBLAPACK unless DONT_USE_LIBLAPACK is set
+  if host_machine.system() == 'darwin'
+    platform_args += ['-DDONT_USE_LIBLAPACK']
+  endif
 endif
 
 # ECM (GMP-ECM factoring library)
