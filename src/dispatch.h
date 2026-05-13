@@ -23,8 +23,39 @@
 namespace giac {
 #endif // ndef NO_NAMESPACE_GIAC
 
-#if !defined DOUBLEVAL && (defined __amd64 || defined x86_64) && !defined SMARTPTR64 
+#if !defined DOUBLEVAL && (defined __amd64 || defined x86_64) && !defined SMARTPTR64
 #define DOUBLEVAL 1
+#endif
+
+// Default the `type` field of class gen to a full 8-bit byte rather
+// than the historical `unsigned char type:5; unsigned char type_unused:3;`
+// bitfield (see gen.h).
+//
+// Rationale: the bitfield form is laid out and accessed in slightly
+// different ways across GCC versions — the compiler fuses adjacent
+// bitfield writes (type + subtype) using version-dependent bit
+// placements. When libgiac and a consumer library are compiled with
+// different GCC versions, their views of which bits hold `type` can
+// disagree, producing a real, user-visible ABI bug: in the
+// libgiac_julia / Giac.jl stack on Windows, MPFR _REAL gens come
+// back tagged as _DOUBLE_, breaking float() and conversions.
+//
+// Switching to a full byte costs ~3 bits of mantissa on inline
+// doubles stored within a gen (sizeof(gen) is unchanged at 64 bits;
+// the inline float field gives up 3 bits to the wider type tag).
+// Bounded, harmless, and the historical default for gen.h before
+// the bitfield was introduced. Recommended by giac's author for
+// portability.
+//
+// The #ifndef guard lets a build that already pre-defines the macro
+// (e.g. via -DGIAC_TYPE_ON_8BITS=1 on the command line or in a
+// generated config.h) keep its own definition. To opt back into the
+// legacy bitfield layout, remove this block.
+//
+// See https://github.com/s-celles/libgiac-julia-wrapper/pull/5
+//     https://github.com/s-celles/Giac.jl/pull/22
+#ifndef GIAC_TYPE_ON_8BITS
+#define GIAC_TYPE_ON_8BITS 1
 #endif
 
   enum {
