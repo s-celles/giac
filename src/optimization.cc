@@ -28,7 +28,12 @@
 #include <string>
 #include <cfloat>
 #ifdef HAVE_PARI_PARI_H
+/* See the note in pari.cc.old: GCC <= 10 misparses paridecl.h's
+ * `long rank(GEN x);` as a deduction guide for std::rank under -std=c++17,
+ * because giacPCH.h has already brought in `using namespace std;`. */
+#define rank pari_rank
 #include <pari/pari.h>
+#undef rank
 #endif
 
 using namespace std;

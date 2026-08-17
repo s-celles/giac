@@ -58,6 +58,15 @@ static long int abs(long int & l){
     return l;
 }
 #include "pari.h"
+/* paridecl.h declares `long rank(GEN x);`. The `using namespace std;` above
+ * makes the std::rank class template visible unqualified, and GCC <= 10 then
+ * parses that declaration as a deduction guide for std::rank, failing under
+ * -std=c++17 ("return type specified for deduction guide"). Hoisting the PARI
+ * headers above giacPCH.h is not an option: PARI defines coeff() and swap()
+ * macros that clash with giac's own members. giac never calls PARI's rank(),
+ * and the PARI headers spell that identifier exactly once, so rename it out of
+ * the way while they are parsed. */
+#define rank pari_rank
 extern "C" {
 #include <pari/pari.h>
 #include <pari/paripriv.h>
@@ -68,6 +77,7 @@ extern "C" {
 #endif
   extern entree functions_basic[];
 }
+#undef rank
 #if PARI_VERSION_CODE<PARI_VERSION(2,4,0) // 132096
 #define PARI23
 #else

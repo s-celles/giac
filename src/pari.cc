@@ -62,6 +62,9 @@ static long int abs(long int & l){
     return l;
 }
 #include "pari.h"
+/* See the note in pari.cc.old: GCC <= 10 misparses paridecl.h's
+ * `long rank(GEN x);` as a deduction guide for std::rank under -std=c++17. */
+#define rank pari_rank
 extern "C" {
 #include <pari/pari.h>
 #include <pari/paripriv.h>
@@ -72,6 +75,7 @@ extern "C" {
 #endif
   extern entree functions_basic[];
 }
+#undef rank
 jmp_buf env;
 static void
 gp_err_recover(long numerr)
