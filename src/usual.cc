@@ -7451,8 +7451,17 @@ namespace giac {
     if (args.type!=_INT_){
 #ifdef HAVE_LIBPARI
       gen res=pari_isprime(args,certif);
-      if (res.type!=_STRNG)
-        return res;
+      if (res.type!=_STRNG){
+	// PARI's isprime() answers with a boolean, whereas is_prime() follows
+	// GMP's mpz_probab_prime_p() convention: 0 composite, 1 probably
+	// prime, 2 proven prime. isprime() is a proof, not a pseudo-prime
+	// test, so report 2 rather than passing PARI's 1 through -- otherwise
+	// linking against PARI silently downgrades every answer above
+	// INT_MAX from "proven" to "probably".
+	if (res.type==_INT_ && res.val==1)
+	  return 2;
+	return res;
+      }
 #else
       if (certif) return gensizeerr("Compile with PARI for prime certificate");
 #endif
