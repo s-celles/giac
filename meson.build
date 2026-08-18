@@ -175,14 +175,18 @@ optional_deps = []
 # PARI
 pari_dep = dependency('pari', required: false)
 if not pari_dep.found() and not get_option('pari').disabled()
-  # PARI often lacks a pkg-config file; fall back to manual detection
-  _pari_extra_dirs = []
+  # PARI often lacks a pkg-config file; fall back to manual detection.
+  # Search the default path first: passing `dirs` narrows the search to those
+  # directories, which loses PARI when it lives in the toolchain prefix -- as
+  # it does in every cross build, where the Homebrew paths below do not exist.
   _pari_extra_args = []
-  if host_machine.system() == 'darwin'
-    _pari_extra_dirs = ['/opt/homebrew/lib', '/usr/local/lib']
+  _pari_lib = cc.find_library('pari', required: false)
+  if not _pari_lib.found() and host_machine.system() == 'darwin'
+    # Native macOS: PARI usually sits under a Homebrew or MacPorts prefix.
     _pari_extra_args = ['-I/opt/homebrew/include', '-I/usr/local/include']
+    _pari_lib = cc.find_library('pari', required: false,
+      dirs: ['/opt/homebrew/lib', '/usr/local/lib'])
   endif
-  _pari_lib = cc.find_library('pari', required: false, dirs: _pari_extra_dirs)
   if _pari_lib.found() and cc.has_header('pari/pari.h', args: _pari_extra_args)
     pari_dep = declare_dependency(
       dependencies: _pari_lib,
