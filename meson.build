@@ -127,22 +127,21 @@ elif host_machine.system() == 'darwin'
   cdata.set('HAVE_LIBPTHREAD', 1)
   is_ios = false
   is_catalyst = false
-  # host_machine.subsystem() requires Meson >= 1.5.0; guard with version check
-  if meson.version().version_compare('>= 1.5.0')
-    if host_machine.subsystem() == 'ios'
-      is_ios = true
-      platform_args += ['-DAPPLE_SMART', '-DNO_GETTEXT', '-DNO_SCANDIR', '-D_IOS_FIX_']
-      cdata.set('HAVE_CONFIG_H', 1)
-    elif host_machine.subsystem() == 'macos'
-      # Could be Mac Catalyst or native macOS
-      is_catalyst = true
-      platform_args += ['-DAPPLE_SMART', '-DNO_GETTEXT', '-DNO_SCANDIR']
-    else
-      # Native macOS desktop
-      platform_args += ['-DNO_SCANDIR']
-    endif
+  # Do not use host_machine.subsystem() here. It aborts configuration outright
+  # when a cross file leaves `subsystem` unset -- BinaryBuilder's darwin
+  # toolchain does -- and it cannot tell Mac Catalyst from a native desktop
+  # build anyway, since both report 'macos'. Take the flavour from an option
+  # that the ios/maccatalyst cross files set explicitly.
+  _apple_subsystem = get_option('apple_subsystem')
+  if _apple_subsystem == 'ios'
+    is_ios = true
+    platform_args += ['-DAPPLE_SMART', '-DNO_GETTEXT', '-DNO_SCANDIR', '-D_IOS_FIX_']
+    cdata.set('HAVE_CONFIG_H', 1)
+  elif _apple_subsystem == 'catalyst'
+    is_catalyst = true
+    platform_args += ['-DAPPLE_SMART', '-DNO_GETTEXT', '-DNO_SCANDIR']
   else
-    # Meson < 1.5.0: assume native macOS desktop
+    # 'auto' or 'macos': native macOS desktop
     platform_args += ['-DNO_SCANDIR']
   endif
 

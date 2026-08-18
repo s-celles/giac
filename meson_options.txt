@@ -30,3 +30,10 @@ option('libbf',        type: 'feature', value: 'auto', description: 'libbf arbit
 
 # Build behavior
 option('regen_parser', type: 'boolean', value: false, description: 'Regenerate flex/bison parser (requires flex + bison)')
+
+option('apple_subsystem',
+  type: 'combo',
+  choices: ['auto', 'macos', 'ios', 'catalyst'],
+  value: 'auto',
+  description: 'Apple platform flavour: auto/macos = native desktop. Set by the ios-*/maccatalyst-* cross files; host_machine.subsystem() cannot be used, see meson.build',
+)
